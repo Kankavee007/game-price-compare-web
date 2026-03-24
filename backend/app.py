@@ -22,7 +22,7 @@ def search():
     rate = get_exchange_rate(currency)
 
     result = []
-    for game in data[:10]:
+    for game in data:
         usd_price = float(game["cheapest"])
         converted = usd_price * rate
 
@@ -31,7 +31,8 @@ def search():
             "price": round(converted, 2),
             "currency": currency,
             "thumb": game["thumb"],
-            "storeID": game["cheapestDealID"][:1]  # workaround ง่าย (หรือ map จริงทีหลัง)
+            "storeID": game["cheapestDealID"][:1],  # workaround ง่าย (หรือ map จริงทีหลัง)
+            "dealUrl": f"https://www.cheapshark.com/redirect?dealID={game['cheapestDealID']}"
         })
 
     return jsonify(result)

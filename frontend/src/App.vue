@@ -36,6 +36,11 @@
     loading.value = false
   }
 
+  const openDeal = (url) => {
+    if (!url) return
+    window.open(url, "_blank")
+  }
+
   const getStoreName = (id) => {
 
     return stores[id] || "Store"
@@ -55,6 +60,14 @@
     timeout = setTimeout(() => {
       searchGame()
     }, 500) // รอ 500ms
+  })
+
+  watch(query, (newVal) => {
+    if (!newVal) {
+      document.title = "Game Price Compare"
+    } else {
+      document.title = `${newVal} - Game Price Compare`
+    }
   })
 </script>
 
@@ -93,25 +106,24 @@
       <!-- Grid -->
       <div class="grid gap-6 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
         
+        <!-- card  -->
         <div
           v-for="game in games"
           :key="game.name"
-          class="group relative bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:scale-105 transition duration-300 cursor-pointer"
+          @click="openDeal(game.dealUrl)"
+          class="group relative bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:scale-105 hover:shadow-blue-500/20 transition duration-300 cursor-pointer"
         >
           
-          <!-- Image -->
-          <img
-            :src="game.thumb"
-            class="w-full h-60 object-cover"
-          />
-
-          <!-- Store badge -->
+          <!-- image -->
+          <img :src="game.thumb" class="w-full h-60 object-cover" />
+          
+          <!-- tag store -->
           <div class="absolute top-2 left-2 bg-black/70 text-xs px-2 py-1 rounded">
             🏷️ {{ getStoreName(game.storeID) }}
           </div>
 
-          <!-- Hover Overlay -->
-          <div class="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition duration-300 flex flex-col justify-end p-3">
+          <!-- hover overlay -->
+          <div class="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-transparent backdrop-blur-sm opacity-0 group-hover:opacity-100 transition duration-300 flex flex-col justify-end p-3">
             
             <h3 class="text-sm font-semibold">
               {{ game.name }}
@@ -119,10 +131,6 @@
 
             <p class="text-green-400 font-bold text-lg">
               💰 {{ game.price }} {{ game.currency }}
-            </p>
-
-            <p class="text-gray-400 text-xs mt-1">
-              Click to view deal
             </p>
 
           </div>
