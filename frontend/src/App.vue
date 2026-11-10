@@ -1,144 +1,95 @@
-<script setup>
-  import { ref, watch } from "vue"
+<script setup lang="ts">
+import { ref, watch } from 'vue'
 
-  const query = ref("")
-  const currency = ref("USD")
-  const games = ref([])
-  const loading = ref(false)
-  const stores = {
-      "1": "Steam",
-      "2": "GamersGate",
-      "3": "GreenManGaming",
-      "7": "GOG",
-      "8": "Origin",
-      "11": "Humble"
-    }
+import { searchGames } from '@/api/games'
+import CurrencySelect from '@/components/CurrencySelect.vue'
+import GameCard from '@/components/GameCard.vue'
+import type { Currency, Game } from '@/types'
 
-  let timeout = null
+const DEBOUNCE_MS = 500
 
-  const searchGame = async () => {
-    if (!query.value) {
-      games.value = []
-      return
-    }
+const query = ref('')
+const currency = ref<Currency>('USD')
+const games = ref<Game[]>([])
+const loading = ref(false)
+const error = ref<string | null>(null)
+const searchedFor = ref<string | null>(null) // query of the last finished search
 
-    loading.value = true
+let timer: ReturnType<typeof setTimeout> | undefined
+let controller: AbortController | undefined
 
-    try {
-      const res =
-        await fetch(`http://localhost:5000/api/search?query=${query.value}&currency=${currency.value}`)
-      const data = await res.json()
-      games.value = data
-    } catch (err) {
-      console.error(err)
-    }
+async function runSearch() {
+  const q = query.value.trim()
 
+  // Cancel the previous request so a slow old response can't overwrite a newer one
+  controller?.abort()
+
+  if (!q) {
+    games.value = []
+    error.value = null
+    searchedFor.value = null
     loading.value = false
+    return
   }
 
-  const openDeal = (url) => {
-    if (!url) return
-    window.open(url, "_blank")
+  controller = new AbortController()
+  const { signal } = controller
+  loading.value = true
+  error.value = null
+
+  try {
+    games.value = await searchGames(q, currency.value, signal)
+  } catch (err) {
+    if (signal.aborted) return
+    games.value = []
+    error.value = err instanceof Error ? err.message : 'Something went wrong'
   }
+  loading.value = false
+  searchedFor.value = q
+}
 
-  const getStoreName = (id) => {
+watch([query, currency], () => {
+  clearTimeout(timer)
+  timer = setTimeout(runSearch, DEBOUNCE_MS)
+})
 
-    return stores[id] || "Store"
-  }
-
-  watch(query, (newVal) => {
-    clearTimeout(timeout)
-
-    timeout = setTimeout(() => {
-      searchGame()
-    }, 500) // รอ 500ms
-  })
-
-  watch(currency, (newVal) => {
-    clearTimeout(timeout)
-
-    timeout = setTimeout(() => {
-      searchGame()
-    }, 500) // รอ 500ms
-  })
-
-  watch(query, (newVal) => {
-    if (!newVal) {
-      document.title = "Game Price Compare"
-    } else {
-      document.title = `${newVal} - Game Price Compare`
-    }
-  })
+watch(query, (q) => {
+  document.title = q.trim() ? `${q.trim()} - Game Price Compare` : 'Game Price Compare'
+})
 </script>
 
 <template>
   <div class="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white p-6">
-    
-    <div class="max-w-6xl mx-auto">
-      
-      <!-- Title -->
-      <h1 class="text-3xl font-bold text-center">
-        🎮 Game Price Compare
-      </h1>
+    <main class="max-w-6xl mx-auto">
+      <h1 class="text-3xl font-bold text-center">🎮 Game Price Compare</h1>
 
-      <!-- Currency selector -->
       <div class="flex justify-center mt-4">
-        <select
-          v-model="currency"
-          class="bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="USD">USD 💵</option>
-          <option value="THB">THB 🇹🇭</option>
-          <option value="EUR">EUR 💶</option>
-        </select>
+        <CurrencySelect v-model="currency" />
       </div>
 
-      <!-- Divider -->
       <hr class="my-6 border-gray-700" />
 
-      <!-- Search -->
       <input
         v-model="query"
+        type="search"
         placeholder="Search game..."
+        aria-label="Search game"
         class="w-full p-3 rounded-xl bg-gray-800 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-8"
       />
 
-      <!-- Grid -->
-      <div class="grid gap-6 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-        
-        <!-- card  -->
-        <div
-          v-for="game in games"
-          :key="game.name"
-          @click="openDeal(game.dealUrl)"
-          class="group relative bg-gray-800 rounded-2xl overflow-hidden shadow-lg hover:scale-105 hover:shadow-blue-500/20 transition duration-300 cursor-pointer"
-        >
-          
-          <!-- image -->
-          <img :src="game.thumb" class="w-full h-60 object-cover" />
-          
-          <!-- tag store -->
-          <div class="absolute top-2 left-2 bg-black/70 text-xs px-2 py-1 rounded">
-            🏷️ {{ getStoreName(game.storeID) }}
-          </div>
+      <p v-if="loading" class="text-center text-gray-400" role="status">Searching…</p>
+      <p v-else-if="error" class="text-center text-red-400" role="alert">⚠️ {{ error }}</p>
+      <p v-else-if="searchedFor && games.length === 0" class="text-center text-gray-400">
+        No games found for "{{ searchedFor }}"
+      </p>
 
-          <!-- hover overlay -->
-          <div class="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-transparent backdrop-blur-sm opacity-0 group-hover:opacity-100 transition duration-300 flex flex-col justify-end p-3">
-            
-            <h3 class="text-sm font-semibold">
-              {{ game.name }}
-            </h3>
-
-            <p class="text-green-400 font-bold text-lg">
-              💰 {{ game.price }} {{ game.currency }}
-            </p>
-
-          </div>
-
-        </div>
-
+      <div
+        v-if="games.length"
+        class="grid gap-6 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
+        :class="{ 'opacity-50': loading }"
+      >
+        <GameCard v-for="game in games" :key="game.dealUrl" :game="game" />
       </div>
-    </div>
-
+    </main>
   </div>
 </template>

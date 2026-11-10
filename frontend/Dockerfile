@@ -1,9 +1,11 @@
+# Local development image (production runs on Vercel).
 FROM node:20
 
 WORKDIR /app
 
-COPY . .
+COPY package*.json ./
+RUN npm ci
 
-RUN npm install
+COPY . .
 
 CMD ["npm", "run", "dev", "--", "--host"]
