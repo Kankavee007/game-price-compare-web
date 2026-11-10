@@ -6,7 +6,8 @@
     price: number
     currency: string
     thumb: string
-    storeID: string
+    storeID: string | null
+    storeName: string | null
     dealUrl: string
   }
 
@@ -14,14 +15,6 @@
   const currency = ref("USD")
   const games = ref<Game[]>([])
   const loading = ref(false)
-  const stores: Record<string, string> = {
-      "1": "Steam",
-      "2": "GamersGate",
-      "3": "GreenManGaming",
-      "7": "GOG",
-      "8": "Origin",
-      "11": "Humble"
-    }
 
   let timeout: ReturnType<typeof setTimeout> | undefined
 
@@ -36,10 +29,11 @@
     try {
       const params = new URLSearchParams({ query: query.value, currency: currency.value })
       const res = await fetch(`/api/search?${params}`)
-      const data = await res.json()
-      games.value = data
+      if (!res.ok) throw new Error(`search failed: ${res.status}`)
+      games.value = await res.json()
     } catch (err) {
       console.error(err)
+      games.value = []
     }
 
     loading.value = false
@@ -48,11 +42,6 @@
   const openDeal = (url: string) => {
     if (!url) return
     window.open(url, "_blank")
-  }
-
-  const getStoreName = (id: string) => {
-
-    return stores[id] || "Store"
   }
 
   watch(query, (newVal) => {
@@ -128,7 +117,7 @@
           
           <!-- tag store -->
           <div class="absolute top-2 left-2 bg-black/70 text-xs px-2 py-1 rounded">
-            🏷️ {{ getStoreName(game.storeID) }}
+            🏷️ {{ game.storeName ?? "Store" }}
           </div>
 
           <!-- hover overlay -->

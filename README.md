@@ -5,7 +5,20 @@ My first web project by myself
 ค้นหาราคาเกมที่ถูกที่สุดจาก [CheapShark](https://www.cheapshark.com/) และแปลงสกุลเงินด้วย [open.er-api.com](https://open.er-api.com/)
 
 - `frontend/`: Vue 3 + Vite + Tailwind CSS
-- `backend/`: Flask (`/api/search`)
+- `backend/`: Flask (`/api/search`, `/api/health`)
+
+```
+backend/
+  app.py              # entrypoint (Vercel loads `app` here)
+  game_api/
+    __init__.py       # create_app()
+    routes.py         # /api/* endpoints
+    cheapshark.py     # game search, deal store lookup, store names (cached 1 day)
+    exchange.py       # USD exchange rates (cached 30 min)
+    http.py           # shared GET with timeout + User-Agent, UpstreamError
+    config.py         # URLs, timeouts, cache durations, env vars
+  tests/              # pytest, external APIs mocked
+```
 
 ## Run locally
 
@@ -25,6 +38,14 @@ npm run dev
 Vite proxies `/api/*` to `http://localhost:5000` (`frontend/vite.config.ts`), so the frontend always calls `/api/...` on its own origin.
 
 Or with Docker: `docker compose up --build`
+
+### Tests
+
+```bash
+cd backend
+pip install -r requirements-dev.txt
+pytest
+```
 
 ### Environment variables (backend)
 
