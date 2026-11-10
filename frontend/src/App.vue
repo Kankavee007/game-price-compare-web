@@ -1,11 +1,20 @@
-<script setup>
+<script setup lang="ts">
   import { ref, watch } from "vue"
+
+  interface Game {
+    name: string
+    price: number
+    currency: string
+    thumb: string
+    storeID: string
+    dealUrl: string
+  }
 
   const query = ref("")
   const currency = ref("USD")
-  const games = ref([])
+  const games = ref<Game[]>([])
   const loading = ref(false)
-  const stores = {
+  const stores: Record<string, string> = {
       "1": "Steam",
       "2": "GamersGate",
       "3": "GreenManGaming",
@@ -14,7 +23,7 @@
       "11": "Humble"
     }
 
-  let timeout = null
+  let timeout: ReturnType<typeof setTimeout> | undefined
 
   const searchGame = async () => {
     if (!query.value) {
@@ -25,8 +34,8 @@
     loading.value = true
 
     try {
-      const res =
-        await fetch(`http://localhost:5000/api/search?query=${query.value}&currency=${currency.value}`)
+      const params = new URLSearchParams({ query: query.value, currency: currency.value })
+      const res = await fetch(`/api/search?${params}`)
       const data = await res.json()
       games.value = data
     } catch (err) {
@@ -36,12 +45,12 @@
     loading.value = false
   }
 
-  const openDeal = (url) => {
+  const openDeal = (url: string) => {
     if (!url) return
     window.open(url, "_blank")
   }
 
-  const getStoreName = (id) => {
+  const getStoreName = (id: string) => {
 
     return stores[id] || "Store"
   }

@@ -1,22 +1,26 @@
-from flask import Flask, request, jsonify
-from flask_cors import CORS
-import requests
+import os
 import time
 
+import requests
+from flask import Flask, jsonify, request
+
 app = Flask(__name__)
-CORS(app)
 
 rate_cache = {}
 last_fetch_time = 0
 CACHE_DURATION = 60 * 30  # 30 นาที
+
+# CheapShark ปฏิเสธ User-Agent ทั่วไปอย่าง python-requests ต้องระบุชื่อแอป
+# ตั้งค่าเองได้ผ่าน env เช่น "MyApp/1.0 (contact@example.com)"
+HEADERS = {"User-Agent": os.environ.get("CHEAPSHARK_USER_AGENT", "PriceCompareApp/1.0")}
 
 @app.route("/api/search")
 def search():
     query = request.args.get("query")
     currency = request.args.get("currency", "USD")
 
-    url = f"https://www.cheapshark.com/api/1.0/games?title={query}"
-    res = requests.get(url)
+    url = "https://www.cheapshark.com/api/1.0/games"
+    res = requests.get(url, params={"title": query}, headers=HEADERS)
     data = res.json()
 
     rate = get_exchange_rate(currency)
@@ -61,4 +65,9 @@ def test():
     return jsonify({"msg": "backend working"})
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    # Local development only. Production (Vercel) imports `app` directly.
+    app.run(
+        host=os.environ.get("HOST", "127.0.0.1"),
+        port=int(os.environ.get("PORT", "5000")),
+        debug=os.environ.get("FLASK_DEBUG") == "1",
+    )

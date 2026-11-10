@@ -10,6 +10,12 @@ export default defineConfig({
     vue(),
     vueDevTools(),
   ],
+  server: {
+    // Dev only: forward /api to Flask so the browser sees one origin (no CORS).
+    proxy: {
+      '/api': process.env.API_PROXY_TARGET ?? 'http://localhost:5000',
+    },
+  },
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
