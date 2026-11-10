@@ -1,13 +1,11 @@
 import requests
 
 from . import config
-
-
-class UpstreamError(Exception):
-    """API ภายนอก (CheapShark / er-api) ล่ม ช้าเกิน หรือตอบผิดรูปแบบ"""
+from .errors import UpstreamError
 
 
 def get_json(url, params=None):
+    """GET แล้วคืน JSON ใส่ timeout กับ User-Agent ให้ทุกครั้ง error ทุกแบบกลายเป็น UpstreamError"""
     try:
         res = requests.get(
             url,

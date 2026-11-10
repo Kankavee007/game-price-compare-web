@@ -1,7 +1,8 @@
 import time
 
-from . import config
-from .http import UpstreamError, get_json
+from .. import config
+from ..errors import UpstreamError
+from ..http import get_json
 
 _store_cache = {}
 _store_fetched_at = 0.0

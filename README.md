@@ -9,15 +9,20 @@ My first web project by myself
 
 ```
 backend/
-  app.py              # entrypoint (Vercel loads `app` here)
+  app.py                  # entrypoint (Vercel loads `app` here)
   game_api/
-    __init__.py       # create_app()
-    routes.py         # /api/* endpoints
-    cheapshark.py     # game search, deal store lookup, store names (cached 1 day)
-    exchange.py       # USD exchange rates (cached 30 min)
-    http.py           # shared GET with timeout + User-Agent, UpstreamError
-    config.py         # URLs, timeouts, cache durations, env vars
-  tests/              # pytest, external APIs mocked
+    __init__.py           # create_app()
+    config.py             # URLs, timeouts, cache durations, env vars
+    errors.py             # UpstreamError, InvalidCurrencyError
+    http.py               # shared GET with timeout + User-Agent
+    routes/               # HTTP layer only: read params, call a service, map errors to status codes
+      search.py           #   GET /api/search
+      health.py           #   GET /api/health
+    services/             # business logic + external APIs, no Flask imports
+      search.py           #   search_prices(): combine games, stores, exchange rate
+      cheapshark.py       #   CheapShark API (games, deal stores, store names cached 1 day)
+      exchange.py         #   USD exchange rates (cached 30 min, stale on error)
+  tests/                  # one file per layer, external APIs mocked
 ```
 
 ## Run locally
