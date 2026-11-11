@@ -215,3 +215,11 @@ dist/
 
 # Vercel
 .vercel
+
+# Nuxt
+.nuxt/
+.output/
+.data/
+.nitro/
+# `nuxt generate` creates frontend/dist as a symlink, which "dist/" does not match
+dist

@@ -14,13 +14,13 @@
       "category": "setup",
       "description": "Replace the Vite + Vue app in frontend/ with a Nuxt app that has ssr: false",
       "steps": [
-        "Scaffold Nuxt into frontend/ (keep the folder name so vercel.json root stays frontend/)",
+        "Scaffold Nuxt 4 into frontend/ (keep the folder name so vercel.json root stays frontend/). Nuxt 4 needs Node ^22.22.3 or ^24.15.0, see frontend/.nvmrc",
         "Set ssr: false in nuxt.config.ts",
         "Remove Vite-only files: index.html, vite.config.ts, src/main.ts, env.d.ts, tsconfig.app.json, tsconfig.node.json",
         "Make .gitignore cover .nuxt/ and .output/",
-        "Run npm run dev and see the default Nuxt page at http://localhost:3000"
+        "Run npm run dev and see the app at http://localhost:3000"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "nuxt-02",
@@ -32,7 +32,7 @@
         "Start Flask (cd backend && python app.py) and Nuxt (npm run dev) in two terminals",
         "Open http://localhost:3000/api/health and get {\"status\":\"ok\"}"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "nuxt-03",
@@ -43,7 +43,7 @@
         "Add @nuxtjs/tailwindcss (or the Tailwind setup Nuxt docs recommend) and move tailwind.config.js content paths to Nuxt folders",
         "Put a Tailwind class on a page and see it styled in the browser"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "nuxt-04",
@@ -53,7 +53,8 @@
       "steps": [
         "Move src/types.ts to frontend/types.ts (or utils/) and keep Game, CURRENCIES, Currency unchanged",
         "Move src/api/games.ts to a Nuxt utils/ or composables/ file; keep the relative /api/search URL",
-        "Run npx nuxi typecheck with no errors"
+        "Run npx nuxi typecheck with no errors",
+        "Delete the old frontend/src/ folder once everything is ported, and remove 'src/**' from globalIgnores in eslint.config.ts"
       ],
       "passes": false
     },
@@ -114,6 +115,7 @@
       "category": "devops",
       "description": "Docker Compose still works for local dev",
       "steps": [
+        "Change FROM node:20 to node:24 (Nuxt 4 does not support Node 20)",
         "Update frontend/Dockerfile to run the Nuxt dev server on 0.0.0.0:3000",
         "Change the frontend port mapping in docker-compose.yml from 5173 to 3000",
         "Run docker compose up --build and search a game at http://localhost:3000"
