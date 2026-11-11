@@ -4,7 +4,11 @@
     "web": {
       "root": "frontend/",
       "framework": "nuxtjs",
-      "buildCommand": "npm run generate"
+      "buildCommand": "npm run generate",
+      "routes": [
+        { "handle": "error" },
+        { "src": "/(.*)", "status": 404, "dest": "/404.html" }
+      ]
     },
     "api": {
       "root": "backend/",
