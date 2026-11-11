@@ -1,7 +1,6 @@
 import { globalIgnores } from 'eslint/config'
 import { defineConfigWithVueTs, vueTsConfigs } from '@vue/eslint-config-typescript'
 import pluginVue from 'eslint-plugin-vue'
-import pluginOxlint from 'eslint-plugin-oxlint'
 import skipFormatting from 'eslint-config-prettier/flat'
 
 // To allow more languages other than `ts` in `.vue` files, uncomment the following lines:
@@ -15,12 +14,17 @@ export default defineConfigWithVueTs(
     files: ['**/*.{vue,ts,mts,tsx}'],
   },
 
-  globalIgnores(['**/dist/**', '**/dist-ssr/**', '**/coverage/**']),
+  globalIgnores(['**/dist/**', '**/coverage/**', '.nuxt/**', '.output/**']),
 
   ...pluginVue.configs['flat/essential'],
   vueTsConfigs.recommended,
 
-  ...pluginOxlint.buildFromOxlintConfigFile('.oxlintrc.json'),
+  {
+    // Nuxt names these from the file name (pages/index.vue, layouts/default.vue, error.vue)
+    name: 'app/nuxt-file-names',
+    files: ['app/pages/**/*.vue', 'app/layouts/**/*.vue', 'app/error.vue', 'app/app.vue'],
+    rules: { 'vue/multi-word-component-names': 'off' },
+  },
 
   skipFormatting,
 )
