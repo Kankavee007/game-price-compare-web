@@ -121,7 +121,7 @@
         "Change the frontend port mapping in docker-compose.yml from 5173 to 3000",
         "Run docker compose up --build and search a game at http://localhost:3000"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "nuxt-10",
@@ -135,7 +135,7 @@
         "Confirm /, /about and /api/health all work on the preview",
         "Merge to main and confirm production works"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "nuxt-11",
