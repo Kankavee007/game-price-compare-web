@@ -3,7 +3,8 @@
   "services": {
     "web": {
       "root": "frontend/",
-      "framework": "vite"
+      "framework": "nuxtjs",
+      "buildCommand": "npm run generate"
     },
     "api": {
       "root": "backend/",

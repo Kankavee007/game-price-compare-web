@@ -56,7 +56,7 @@
         "Run npx nuxi typecheck with no errors",
         "Delete the old frontend/src/ folder once everything is ported, and remove 'src/**' from globalIgnores in eslint.config.ts"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "nuxt-05",
@@ -68,7 +68,7 @@
         "Check GameCard still opens dealUrl in a new tab with rel=\"noopener noreferrer\"",
         "Check CurrencySelect still works with v-model (defineModel)"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "nuxt-06",
@@ -81,9 +81,10 @@
         "Change currency and see prices update",
         "Search for nonsense text and see the empty state",
         "Stop Flask and see the error state instead of a blank page",
-        "Type fast and confirm older requests are aborted (Network tab shows canceled)"
+        "Type fast and confirm older requests are aborted (Network tab shows canceled)",
+        "Searches give up after 30 s with a message instead of spinning forever (the Nuxt dev proxy never answers when Flask is down)"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "nuxt-07",
@@ -96,7 +97,7 @@
         "Click between pages and confirm no full page reload",
         "Open /about directly in a new tab and confirm it loads (SPA fallback works)"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "nuxt-08",
@@ -107,7 +108,7 @@
         "Use useHead (or useSeoMeta) on each page instead of setting document.title by hand",
         "Confirm the tab title changes on / , /about and while searching"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "nuxt-09",
@@ -128,7 +129,7 @@
       "category": "deploy",
       "description": "Deploy Nuxt + Flask on Vercel Services",
       "steps": [
-        "In vercel.json change services.web.framework from vite to Nuxt (check the exact slug in Vercel docs, or remove the key so Vercel auto-detects)",
+        "In vercel.json set services.web.framework to \"nuxtjs\" and buildCommand to \"npm run generate\" (static output, no Node function)",
         "Keep the api service and both rewrites unchanged",
         "Push a branch and open the Vercel preview URL",
         "Confirm /, /about and /api/health all work on the preview",
@@ -145,19 +146,21 @@
         "Update the structure section, local run commands (port 3000) and deploy notes",
         "Follow the README from a clean clone and confirm it works"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "nuxt-12",
       "phase": 2,
       "category": "functional",
-      "description": "Optional: enable SSR or hybrid rendering for selected pages",
+      "description": "Prerender pages to static HTML at build time (no server rendering at runtime)",
       "steps": [
-        "Set ssr: true and use routeRules, for example '/about': { prerender: true }",
-        "Keep the search page client-only, because results depend on user input",
-        "Run npm run build and confirm /about is prerendered in .output/public"
+        "Set ssr: true and build with nuxt generate",
+        "routeRules '/': { ssr: false } keeps the search page client-only (SSR HTML would lose text typed before hydration)",
+        "routeRules '/about': { prerender: true }, because the crawler finds no links in the SPA shell at /",
+        "Run npm run generate and confirm .output/public/about/index.html contains the About text",
+        "Serve .output/public with /api forwarded to Flask and confirm search, /about and the 404 page work"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "nuxt-13",
@@ -170,7 +173,8 @@
         "Use it only for fetches that run on the server (useFetch during SSR); browser fetches keep using /api",
         "Deploy a preview and confirm an SSR page renders data with JavaScript disabled"
       ],
-      "passes": false
+      "passes": false,
+      "notes": "Not needed yet: no page fetches data on the server. Do this only when a page needs Flask data in its prerendered or SSR HTML."
     }
   ]
 }

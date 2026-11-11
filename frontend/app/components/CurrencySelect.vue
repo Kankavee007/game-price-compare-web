@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { CURRENCIES, type Currency } from '@/types'
+import { CURRENCIES, type Currency } from '~/types'
 
 const model = defineModel<Currency>({ required: true })
 </script>

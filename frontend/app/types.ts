@@ -1,4 +1,4 @@
-// Response shape of GET /api/search (see backend/game_api/routes.py)
+// Response shape of GET /api/search (see backend/game_api/services/search.py)
 export interface Game {
   name: string
   price: number
