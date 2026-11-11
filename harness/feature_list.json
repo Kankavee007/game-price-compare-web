@@ -1,0 +1,174 @@
+{
+  "project": "game-price-compare-web",
+  "plan": "A: Nuxt frontend + existing Flask backend on Vercel Services",
+  "notes": [
+    "Phase 1 runs Nuxt with ssr: false (SPA). Browser calls /api/* as today, so vercel.json rewrites and Flask stay the same.",
+    "Phase 2 (optional) turns on SSR/hybrid for some pages. Server-side fetches cannot use relative /api, so they need a Vercel service binding URL.",
+    "Only set passes to true after running every step in that feature and seeing it work.",
+    "Backend tests: cd backend && pytest. They must stay green for every feature."
+  ],
+  "features": [
+    {
+      "id": "nuxt-01",
+      "phase": 1,
+      "category": "setup",
+      "description": "Replace the Vite + Vue app in frontend/ with a Nuxt app that has ssr: false",
+      "steps": [
+        "Scaffold Nuxt into frontend/ (keep the folder name so vercel.json root stays frontend/)",
+        "Set ssr: false in nuxt.config.ts",
+        "Remove Vite-only files: index.html, vite.config.ts, src/main.ts, env.d.ts, tsconfig.app.json, tsconfig.node.json",
+        "Make .gitignore cover .nuxt/ and .output/",
+        "Run npm run dev and see the default Nuxt page at http://localhost:3000"
+      ],
+      "passes": false
+    },
+    {
+      "id": "nuxt-02",
+      "phase": 1,
+      "category": "setup",
+      "description": "Proxy /api to Flask in local dev",
+      "steps": [
+        "Add a dev proxy for /api in nuxt.config.ts that targets process.env.API_PROXY_TARGET ?? 'http://localhost:5000'",
+        "Start Flask (cd backend && python app.py) and Nuxt (npm run dev) in two terminals",
+        "Open http://localhost:3000/api/health and get {\"status\":\"ok\"}"
+      ],
+      "passes": false
+    },
+    {
+      "id": "nuxt-03",
+      "phase": 1,
+      "category": "setup",
+      "description": "Tailwind works in Nuxt",
+      "steps": [
+        "Add @nuxtjs/tailwindcss (or the Tailwind setup Nuxt docs recommend) and move tailwind.config.js content paths to Nuxt folders",
+        "Put a Tailwind class on a page and see it styled in the browser"
+      ],
+      "passes": false
+    },
+    {
+      "id": "nuxt-04",
+      "phase": 1,
+      "category": "functional",
+      "description": "Port shared types and the API client",
+      "steps": [
+        "Move src/types.ts to frontend/types.ts (or utils/) and keep Game, CURRENCIES, Currency unchanged",
+        "Move src/api/games.ts to a Nuxt utils/ or composables/ file; keep the relative /api/search URL",
+        "Run npx nuxi typecheck with no errors"
+      ],
+      "passes": false
+    },
+    {
+      "id": "nuxt-05",
+      "phase": 1,
+      "category": "functional",
+      "description": "Port GameCard and CurrencySelect components",
+      "steps": [
+        "Move both .vue files to frontend/components/ (Nuxt auto-imports them, so remove manual imports)",
+        "Check GameCard still opens dealUrl in a new tab with rel=\"noopener noreferrer\"",
+        "Check CurrencySelect still works with v-model (defineModel)"
+      ],
+      "passes": false
+    },
+    {
+      "id": "nuxt-06",
+      "phase": 1,
+      "category": "functional",
+      "description": "Search page at / behaves the same as the current App.vue",
+      "steps": [
+        "Create pages/index.vue with the search input, currency select, debounce 500 ms and AbortController logic from App.vue",
+        "Type a game name and see results after the debounce",
+        "Change currency and see prices update",
+        "Search for nonsense text and see the empty state",
+        "Stop Flask and see the error state instead of a blank page",
+        "Type fast and confirm older requests are aborted (Network tab shows canceled)"
+      ],
+      "passes": false
+    },
+    {
+      "id": "nuxt-07",
+      "phase": 1,
+      "category": "functional",
+      "description": "Shared layout and a second page to prove multi-page routing",
+      "steps": [
+        "Create layouts/default.vue with a header and nav links (NuxtLink) to / and /about",
+        "Create pages/about.vue that explains the data sources (CheapShark, exchange rate API)",
+        "Click between pages and confirm no full page reload",
+        "Open /about directly in a new tab and confirm it loads (SPA fallback works)"
+      ],
+      "passes": false
+    },
+    {
+      "id": "nuxt-08",
+      "phase": 1,
+      "category": "functional",
+      "description": "Page titles per route",
+      "steps": [
+        "Use useHead (or useSeoMeta) on each page instead of setting document.title by hand",
+        "Confirm the tab title changes on / , /about and while searching"
+      ],
+      "passes": false
+    },
+    {
+      "id": "nuxt-09",
+      "phase": 1,
+      "category": "devops",
+      "description": "Docker Compose still works for local dev",
+      "steps": [
+        "Update frontend/Dockerfile to run the Nuxt dev server on 0.0.0.0:3000",
+        "Change the frontend port mapping in docker-compose.yml from 5173 to 3000",
+        "Run docker compose up --build and search a game at http://localhost:3000"
+      ],
+      "passes": false
+    },
+    {
+      "id": "nuxt-10",
+      "phase": 1,
+      "category": "deploy",
+      "description": "Deploy Nuxt + Flask on Vercel Services",
+      "steps": [
+        "In vercel.json change services.web.framework from vite to Nuxt (check the exact slug in Vercel docs, or remove the key so Vercel auto-detects)",
+        "Keep the api service and both rewrites unchanged",
+        "Push a branch and open the Vercel preview URL",
+        "Confirm /, /about and /api/health all work on the preview",
+        "Merge to main and confirm production works"
+      ],
+      "passes": false
+    },
+    {
+      "id": "nuxt-11",
+      "phase": 1,
+      "category": "docs",
+      "description": "README matches the new frontend",
+      "steps": [
+        "Update the structure section, local run commands (port 3000) and deploy notes",
+        "Follow the README from a clean clone and confirm it works"
+      ],
+      "passes": false
+    },
+    {
+      "id": "nuxt-12",
+      "phase": 2,
+      "category": "functional",
+      "description": "Optional: enable SSR or hybrid rendering for selected pages",
+      "steps": [
+        "Set ssr: true and use routeRules, for example '/about': { prerender: true }",
+        "Keep the search page client-only, because results depend on user input",
+        "Run npm run build and confirm /about is prerendered in .output/public"
+      ],
+      "passes": false
+    },
+    {
+      "id": "nuxt-13",
+      "phase": 2,
+      "category": "deploy",
+      "description": "Optional: server-side fetch from Flask via a Vercel service binding",
+      "steps": [
+        "Add a service binding so the web service gets the api service URL as an env var",
+        "Read that URL through runtimeConfig in nuxt.config.ts; never hardcode it",
+        "Use it only for fetches that run on the server (useFetch during SSR); browser fetches keep using /api",
+        "Deploy a preview and confirm an SSR page renders data with JavaScript disabled"
+      ],
+      "passes": false
+    }
+  ]
+}
