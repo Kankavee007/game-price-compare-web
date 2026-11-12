@@ -5,7 +5,8 @@
     "Phase 1 runs Nuxt with ssr: false (SPA). Browser calls /api/* as today, so vercel.json rewrites and Flask stay the same.",
     "Phase 2 (optional) turns on SSR/hybrid for some pages. Server-side fetches cannot use relative /api, so they need a Vercel service binding URL.",
     "Only set passes to true after running every step in that feature and seeing it work.",
-    "Backend tests: cd backend && pytest. They must stay green for every feature."
+    "Backend tests: cd backend && pytest. They must stay green for every feature.",
+    "Phase 3 adds a game detail page at /games/[id]. Game info (name, genres, rating, cover, summary) comes from the IGDB API; every store price comes from CheapShark. id is the CheapShark gameID. Flask calls both APIs, so IGDB credentials never reach the browser."
   ],
   "features": [
     {
@@ -175,6 +176,82 @@
       ],
       "passes": false,
       "notes": "Not needed yet: no page fetches data on the server. Do this only when a page needs Flask data in its prerendered or SSR HTML."
+    },
+    {
+      "id": "detail-01",
+      "phase": 3,
+      "category": "functional",
+      "description": "Backend: IGDB client with Twitch app token",
+      "steps": [
+        "Register a Twitch app and read TWITCH_CLIENT_ID and TWITCH_CLIENT_SECRET from env (never commit them; add them to Vercel api service env and docker-compose env)",
+        "Get an app access token with POST https://id.twitch.tv/oauth2/token?grant_type=client_credentials and cache it in memory until shortly before expires_in",
+        "Add backend/game_api/services/igdb.py that POSTs Apicalypse queries to https://api.igdb.com/v4/games with Client-ID and Authorization: Bearer headers",
+        "Find the IGDB game by CheapShark's steamAppID first (external_games, Steam source, uid = steamAppID); if there is no steamAppID or no match, search by title and take the best match",
+        "Fetch fields: name, genres.name, rating, rating_count, aggregated_rating, cover.image_id, summary, first_release_date",
+        "Raise UpstreamError when IGDB fails; return None when no game matches",
+        "Add pytest tests with mocked HTTP: token caching, Steam match, title fallback, no match, IGDB error"
+      ],
+      "passes": false
+    },
+    {
+      "id": "detail-02",
+      "phase": 3,
+      "category": "functional",
+      "description": "Backend: GET /api/games/<id>?currency=XXX returns game info plus every store deal sorted by price",
+      "steps": [
+        "Add cheapshark.get_game(game_id) that calls GET /games?id=<id> and returns info (title, steamAppID, thumb), cheapestPriceEver and deals",
+        "Add services/game_detail.py: validate currency like search_prices, convert each deal price and retailPrice from USD with the exchange rate, add storeName from get_store_names()",
+        "Each deal has storeID, storeName, price, retailPrice, savings, dealUrl (https://www.cheapshark.com/redirect?dealID=...)",
+        "Sort deals by price ascending (cheapest first); break ties by storeName",
+        "Response shape: { id, name, thumb, cover, genres[], rating, ratingCount, criticRating, summary, releaseDate, currency, deals[] }",
+        "If IGDB has no match or fails, still return 200 with the CheapShark title/thumb and null/empty IGDB fields, so prices always show",
+        "Unknown CheapShark id gives 404 JSON; bad currency gives the same 400 as /api/search; CheapShark down gives the same upstream error as /api/search",
+        "Add route tests: sorting, currency conversion, IGDB fallback, 404, 400"
+      ],
+      "passes": false
+    },
+    {
+      "id": "detail-03",
+      "phase": 3,
+      "category": "functional",
+      "description": "Search results link to the detail page instead of straight to the store",
+      "steps": [
+        "Add gameID (CheapShark) to each /api/search result and to the Game type in frontend/app/types.ts",
+        "Change GameCard from an external <a href=dealUrl target=_blank> to a NuxtLink to /games/<gameID>?currency=<current currency>",
+        "Click a card and see the detail page open in the same tab with no full page reload; middle-click still opens it in a new tab",
+        "Browser back returns to the search page"
+      ],
+      "passes": false
+    },
+    {
+      "id": "detail-04",
+      "phase": 3,
+      "category": "functional",
+      "description": "Detail page /games/[id] shows game info and a store list from cheapest to most expensive",
+      "steps": [
+        "Create pages/games/[id].vue that fetches /api/games/<id> with the currency from the query (default USD) and a CurrencySelect that refetches when changed",
+        "Show cover image (IGDB cover, fall back to CheapShark thumb), game name, genres as tags, rating (user and critic, e.g. 87/100 with count) and release date; hide fields that are null",
+        "List every store deal sorted cheapest first: store name, price, original price struck through when on sale, savings %; mark the first row as the cheapest",
+        "Each store row is a real link to dealUrl with target=\"_blank\" rel=\"noopener noreferrer\"",
+        "Show loading, error (Flask down / timeout like the search page) and not-found states; unknown id shows the not-found state, not a blank page",
+        "useHead sets the tab title to the game name",
+        "Works at phone width with no horizontal scroll"
+      ],
+      "passes": false
+    },
+    {
+      "id": "detail-05",
+      "phase": 3,
+      "category": "deploy",
+      "description": "Detail page works on static output and Vercel",
+      "steps": [
+        "Add routeRules '/games/**': { ssr: false } so the page is client-only (ids are dynamic and cannot be prerendered)",
+        "In vercel.json web routes, serve the SPA shell (200.html from nuxt generate) for /games/(.*) before the 404 catch-all",
+        "Run npm run generate, serve .output/public with /api forwarded to Flask, open /games/<id> directly and see it load",
+        "Deploy a preview with the Twitch env vars set; open a detail page directly and from search; confirm unknown paths still give the 404 page",
+        "Update README (IGDB env vars, new endpoint) and the about page (IGDB as a data source)"
+      ],
+      "passes": false
     }
   ]
 }
