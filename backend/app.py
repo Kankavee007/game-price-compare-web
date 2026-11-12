@@ -2,6 +2,12 @@
 
 import os
 
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
 from game_api import create_app
 
 app = create_app()

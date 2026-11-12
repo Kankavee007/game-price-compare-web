@@ -2,6 +2,9 @@ import os
 
 CHEAPSHARK_BASE_URL = "https://www.cheapshark.com/api/1.0"
 EXCHANGE_RATE_URL = "https://open.er-api.com/v6/latest/USD"
+IGDB_BASE_URL = "https://api.igdb.com/v4"
+TWITCH_CLIENT_ID = os.environ.get("TWITCH_CLIENT_ID")
+TWITCH_CLIENT_SECRET = os.environ.get("TWITCH_CLIENT_SECRET")
 
 # CheapShark ปฏิเสธ User-Agent ทั่วไปอย่าง python-requests ต้องระบุชื่อแอป
 # ตั้งค่าเองได้ผ่าน env เช่น "MyApp/1.0 (contact@example.com)"
