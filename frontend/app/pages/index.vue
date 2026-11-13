@@ -1,11 +1,15 @@
 <script setup lang="ts">
 // searchGames (utils/) and the components are auto-imported by Nuxt
-import type { Currency, Game } from '~/types'
+import { toCurrency, type Currency, type Game } from '~/types'
 
 const DEBOUNCE_MS = 500
 
-const query = ref('')
-const currency = ref<Currency>('USD')
+// The search lives in the URL (/?q=portal&currency=THB) so the browser Back button from a
+// detail page restores it, and a search can be shared as a link.
+const route = useRoute()
+const router = useRouter()
+const query = ref(typeof route.query.q === 'string' ? route.query.q : '')
+const currency = ref<Currency>(toCurrency(route.query.currency))
 const games = ref<Game[]>([])
 const loading = ref(false)
 const error = ref<string | null>(null)
@@ -47,6 +51,16 @@ async function runSearch() {
 watch([query, currency], () => {
   clearTimeout(timer)
   timer = setTimeout(runSearch, DEBOUNCE_MS)
+  // replace, not push: typing should not add a history entry per keystroke
+  const q = query.value.trim()
+  router.replace({
+    query: { ...(q && { q }), ...(currency.value !== 'USD' && { currency: currency.value }) },
+  })
+})
+
+// Coming back from a detail page: search right away instead of waiting for the debounce
+onMounted(() => {
+  if (query.value.trim()) runSearch()
 })
 
 // Leaving the page (e.g. to /about) must not leave a timer or request running
@@ -88,7 +102,7 @@ useHead({ title: () => query.value.trim() })
       class="grid gap-6 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
       :class="{ 'opacity-50': loading }"
     >
-      <GameCard v-for="game in games" :key="game.dealUrl" :game="game" />
+      <GameCard v-for="game in games" :key="game.gameID" :game="game" />
     </div>
   </div>
 </template>

@@ -221,7 +221,7 @@
         "Click a card and see the detail page open in the same tab with no full page reload; middle-click still opens it in a new tab",
         "Browser back returns to the search page"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "detail-04",
@@ -237,7 +237,7 @@
         "useHead sets the tab title to the game name",
         "Works at phone width with no horizontal scroll"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "detail-05",

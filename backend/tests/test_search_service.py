@@ -26,6 +26,7 @@ def fake_apis(monkeypatch):
 def test_converts_price_and_names_store():
     assert search_prices("portal", "THB") == [
         {
+            "gameID": "82",
             "name": "Portal",
             "price": 349.65,
             "currency": "THB",
