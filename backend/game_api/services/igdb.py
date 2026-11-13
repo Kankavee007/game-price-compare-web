@@ -73,7 +73,12 @@ def find_game(steam_app_id: str | None, title: str | None):
         # FIX: was "limit 1" and took the first result. IGDB search does not rank the exact
         # name first: "Portal 2" returned "Portal Maze 2" first and Portal 2 third, and
         # "The Witcher 3: Wild Hunt" returned a bundle first. Fetch a few and pick with _pick_best.
-        query = f'search "{_escape(title)}"; fields {fields}; limit {TITLE_SEARCH_LIMIT};'
+        # FIX: only PC games (CheapShark only sells PC games). Without it, "LEGO Batman" matched
+        # an unlicensed Sega Mega Drive game with exactly the same name.
+        query = (
+            f'search "{_escape(title)}"; fields {fields}; '
+            f"where platforms = ({PC_PLATFORM}); limit {TITLE_SEARCH_LIMIT};"
+        )
         data = post_json(url, body=query, headers=headers)
 
         if isinstance(data, list) and data:
@@ -84,24 +89,25 @@ def find_game(steam_app_id: str | None, title: str | None):
 
 TITLE_SEARCH_LIMIT = 10  # enough to reach the real game in the searches we tried (it was 2nd or 3rd)
 MAIN_GAME = 0  # IGDB game_type 0 = main game (1 = DLC, 3 = bundle, 5 = mod, ...)
+PC_PLATFORM = 6  # IGDB platform 6 = PC (Microsoft Windows)
 
 
 def _pick_best(games :list[dict], title :str):
-    """Pick the game whose name matches the title, else IGDB's first result.
+    """Pick the game whose name matches the title exactly (ignoring case), else None.
 
     FIX: added for the title search (see find_game). Order of preference:
-    1. exact name (ignoring case) that is a main game, not a DLC/bundle/mod with the same name
-    2. exact name (ignoring case) of any type
-    3. the first result, so we still show something when no name matches exactly
+    1. exact name that is a main game, not a DLC/bundle/mod with the same name
+    2. exact name of any type
+    FIX: no longer falls back to IGDB's first result. With no exact name that was often a
+    different game ("LEGO Batman" gave "LEGO Batman: Legacy of the Dark Knight", a 2025 game),
+    and showing another game's cover and rating is worse than showing none.
     """
     wanted = title.casefold()
     exact = [g for g in games if g.get("name", "").casefold() == wanted]
     for game in exact:
         if game.get("game_type") == MAIN_GAME:
             return game
-    if exact:
-        return exact[0]
-    return games[0]
+    return exact[0] if exact else None
 
 
 def _to_int(value):
