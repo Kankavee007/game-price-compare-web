@@ -191,7 +191,7 @@
         "Raise UpstreamError when IGDB fails; return None when no game matches",
         "Add pytest tests with mocked HTTP: token caching, Steam match, title fallback, no match, IGDB error"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "detail-02",
