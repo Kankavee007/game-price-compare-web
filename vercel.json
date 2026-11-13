@@ -6,6 +6,8 @@
       "framework": "nuxtjs",
       "buildCommand": "npm run generate",
       "routes": [
+        { "handle": "filesystem" },
+        { "src": "/games/[^/]+/?", "dest": "/200.html" },
         { "handle": "error" },
         { "src": "/(.*)", "status": 404, "dest": "/404.html" }
       ]

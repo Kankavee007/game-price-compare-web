@@ -67,7 +67,7 @@ def test_token_refreshes_when_expired(monkeypatch):
 # lookup). fake_igdb is a spy: it records every query body, and answers based on what the
 # query looks like, so tests can check both the result and what was sent to IGDB.
 def fake_igdb(monkeypatch, by_steam, by_title):
-    """Fake IGDB: Steam lookups (queries with "where") get by_steam, title searches get by_title.
+    """Fake IGDB: Steam lookups (queries on external_games) get by_steam, title searches get by_title.
 
     Returns the list that collects every query body sent, in order.
     """
@@ -75,7 +75,8 @@ def fake_igdb(monkeypatch, by_steam, by_title):
 
     def fake_post_json(url, body, headers):
         bodies.append(body)
-        return by_steam if "where" in body else by_title
+        # FIX: was `"where" in body`; the title search now has a where too (PC only)
+        return by_steam if "external_games" in body else by_title
 
     monkeypatch.setattr(igdb, "_get_token", lambda: "fake_token")
     monkeypatch.setattr(igdb, "post_json", fake_post_json)
@@ -148,14 +149,22 @@ def test_title_search_prefers_main_game_over_same_name_dlc(monkeypatch):
     assert igdb.find_game(None, "Some Game")["id"] == 2
 
 
-def test_title_search_without_exact_name_takes_first(monkeypatch):
-    # FIX: new test, no exact name still returns something instead of None
+def test_title_search_without_exact_name_finds_nothing(monkeypatch):
+    # FIX: was ..._takes_first. A near match is often a different game, so no exact name = None
     fake_igdb(monkeypatch, by_steam=[], by_title=[
         {"id": 1, "name": "Portal 2: Community Edition", "game_type": 5},
         {"id": 2, "name": "Portal Maze 2", "game_type": 0},
     ])
 
-    assert igdb.find_game(None, "Portal 2")["id"] == 1
+    assert igdb.find_game(None, "Portal 2") is None
+
+
+def test_title_search_only_looks_at_pc_games(monkeypatch):
+    bodies = fake_igdb(monkeypatch, by_steam=[], by_title=[])
+
+    igdb.find_game(None, "LEGO Batman")
+
+    assert "where platforms = (6);" in bodies[0]
 
 
 def test_title_is_escaped(monkeypatch):
@@ -190,7 +199,8 @@ def test_find_game_invalid_steam_app_id(monkeypatch):
     # FIX: before, this passed even if the bad id was sent, because the fake ignored the body
     assert result["id"] == 789
     assert len(bodies) == 1
-    assert "where" not in bodies[0]
+    # FIX: was `"where" not in`; the title search now has a where too (PC only)
+    assert "external_games" not in bodies[0]
     assert "fields *" not in bodies[0]
 
 

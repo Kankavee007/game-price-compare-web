@@ -2,6 +2,11 @@
 services:
   backend:
     build: ./backend
+    # TWITCH_CLIENT_ID / TWITCH_CLIENT_SECRET for IGDB. Copy backend/.env.example
+    # to backend/.env and fill them in. Optional so compose still starts without it.
+    env_file:
+      - path: ./backend/.env
+        required: false
     environment:
       HOST: 0.0.0.0
       FLASK_DEBUG: "1"

@@ -191,7 +191,7 @@
         "Raise UpstreamError when IGDB fails; return None when no game matches",
         "Add pytest tests with mocked HTTP: token caching, Steam match, title fallback, no match, IGDB error"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "detail-02",
@@ -208,7 +208,7 @@
         "Unknown CheapShark id gives 404 JSON; bad currency gives the same 400 as /api/search; CheapShark down gives the same upstream error as /api/search",
         "Add route tests: sorting, currency conversion, IGDB fallback, 404, 400"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "detail-03",
@@ -221,7 +221,7 @@
         "Click a card and see the detail page open in the same tab with no full page reload; middle-click still opens it in a new tab",
         "Browser back returns to the search page"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "detail-04",
@@ -237,7 +237,7 @@
         "useHead sets the tab title to the game name",
         "Works at phone width with no horizontal scroll"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "detail-05",
@@ -251,7 +251,7 @@
         "Deploy a preview with the Twitch env vars set; open a detail page directly and from search; confirm unknown paths still give the 404 page",
         "Update README (IGDB env vars, new endpoint) and the about page (IGDB as a data source)"
       ],
-      "passes": false
+      "passes": true
     }
   ]
 }

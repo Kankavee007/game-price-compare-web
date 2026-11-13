@@ -1,7 +1,7 @@
 import requests
 
 from . import config
-from .errors import UpstreamError
+from .errors import UpstreamError, UpstreamNotFoundError
 
 def _with_user_agent(headers):
     """Add our User-Agent to every request; a caller's own headers win if they set one.
@@ -22,6 +22,8 @@ def get_json(url, params=None, headers=None):
             headers=_with_user_agent(headers),
             timeout=config.REQUEST_TIMEOUT,
         )
+        if res.status_code == 404:
+            raise UpstreamNotFoundError(f"{url}: 404 Not Found")
         res.raise_for_status()
         return res.json()
     except (requests.RequestException, ValueError) as err:

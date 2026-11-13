@@ -23,6 +23,7 @@ def search_prices(query, currency):
         deal_id = game["cheapestDealID"]
         store_id = deal_stores.get(deal_id)
         results.append({
+            "gameID": game["gameID"],
             "name": game["external"],
             "price": round(float(game["cheapest"]) * rate, 2),
             "currency": currency,
