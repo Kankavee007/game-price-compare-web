@@ -1,6 +1,6 @@
 import pytest
 
-from game_api import create_app
+from game_api import config, create_app
 from game_api.errors import InvalidCurrencyError, UpstreamError
 from game_api.routes import search as search_route
 
@@ -45,5 +45,15 @@ def test_search_maps_errors(client, monkeypatch, error, status):
     assert "error" in res.get_json()
 
 
-def test_health(client):
-    assert client.get("/api/health").get_json() == {"status": "ok"}
+@pytest.mark.parametrize(
+    "client_id, secret, igdb",
+    [("id", "secret", "configured"), ("id", None, "missing"), (None, None, "missing")],
+)
+def test_health(client, monkeypatch, client_id, secret, igdb):
+    monkeypatch.setattr(config, "TWITCH_CLIENT_ID", client_id)
+    monkeypatch.setattr(config, "TWITCH_CLIENT_SECRET", secret)
+
+    body = client.get("/api/health").get_json()
+
+    assert body == {"status": "ok", "igdb": igdb}
+    assert "secret" not in str(body)  # never leaks the values

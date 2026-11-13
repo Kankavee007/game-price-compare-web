@@ -86,7 +86,7 @@ npm run lint
 | `HOST` / `PORT` | `127.0.0.1` / `5000` | Local server bind address |
 | `TWITCH_CLIENT_ID` / `TWITCH_CLIENT_SECRET` | none | IGDB access for the game detail page. Register an app at [dev.twitch.tv/console](https://dev.twitch.tv/console). Without them the detail page still shows prices, only the game info is empty |
 
-Locally, put them in `backend/.env` (git-ignored, copy from `.env.example`). Never commit them.
+Locally, put them in `backend/.env` (git-ignored, copy from `.env.example`). Never commit them. `GET /api/health` shows `"igdb": "configured"` or `"missing"` (never the values), so you can check a deployment from the browser. `configured` only means both are set; if game info is still empty, look for `IGDB lookup failed` in the logs (e.g. a wrong secret).
 
 ## Deploy (Vercel)
 

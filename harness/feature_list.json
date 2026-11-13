@@ -251,7 +251,7 @@
         "Deploy a preview with the Twitch env vars set; open a detail page directly and from search; confirm unknown paths still give the 404 page",
         "Update README (IGDB env vars, new endpoint) and the about page (IGDB as a data source)"
       ],
-      "passes": false
+      "passes": true
     }
   ]
 }
