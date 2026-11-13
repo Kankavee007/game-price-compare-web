@@ -1,7 +1,7 @@
 import time
 
 from .. import config
-from ..errors import UpstreamError
+from ..errors import UpstreamError, UpstreamNotFoundError
 from ..http import get_json
 
 _store_cache = {}
@@ -32,6 +32,20 @@ def get_deal_stores(game_ids):
         if isinstance(game, dict)
         for deal in game.get("deals", [])
     }
+
+
+def get_game(game_id):
+    """ข้อมูลเกมหนึ่งเกมจาก CheapShark: info (title, steamAppID, thumb), cheapestPriceEver, deals
+
+    Returns None when CheapShark does not know the id (it answers 404 with an empty list).
+    """
+    try:
+        data = get_json(f"{config.CHEAPSHARK_BASE_URL}/games", {"id": game_id})
+    except UpstreamNotFoundError:
+        return None
+    if not isinstance(data, dict) or not isinstance(data.get("info"), dict):
+        raise UpstreamError("CheapShark game: unexpected response")
+    return data
 
 
 def get_store_names():

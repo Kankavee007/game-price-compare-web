@@ -208,7 +208,7 @@
         "Unknown CheapShark id gives 404 JSON; bad currency gives the same 400 as /api/search; CheapShark down gives the same upstream error as /api/search",
         "Add route tests: sorting, currency conversion, IGDB fallback, 404, 400"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "detail-03",
