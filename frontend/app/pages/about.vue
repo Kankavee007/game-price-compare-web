@@ -7,7 +7,8 @@ useHead({ title: 'About' })
     <h1 class="text-3xl font-bold text-white">About</h1>
     <p>
       Game Price Compare finds the cheapest current deal for a game across PC stores and shows the
-      price in your currency.
+      price in your currency. Each game also has a page that lists every store's price, cheapest
+      first.
     </p>
 
     <h2 class="text-xl font-semibold text-white pt-2">Where the data comes from</h2>
@@ -32,6 +33,16 @@ useHead({ title: 'About' })
           class="text-blue-400 hover:underline"
           >open.er-api.com</a
         >, refreshed every 30 minutes.
+      </li>
+      <li>
+        Game info on the detail page (genres, ratings, cover, release date):
+        <a
+          href="https://www.igdb.com/"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="text-blue-400 hover:underline"
+          >IGDB</a
+        >.
       </li>
     </ul>
 

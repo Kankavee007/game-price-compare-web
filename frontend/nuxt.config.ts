@@ -15,6 +15,9 @@ export default defineNuxtConfig({
     '/': { ssr: false },
     // Listed explicitly: the prerender crawler starts at / and finds no links in an SPA shell
     '/about': { prerender: true },
+    // Client-only: game ids are dynamic, so these pages cannot be prerendered. A direct visit
+    // gets the SPA shell (200.html), see the /games route in vercel.json.
+    '/games/**': { ssr: false },
   },
 
   devtools: { enabled: true },
