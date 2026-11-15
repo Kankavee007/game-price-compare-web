@@ -13,7 +13,7 @@ frontend/
   app/
     app.vue               # root: <NuxtLayout> + <NuxtPage>, title template
     layouts/default.vue   # header + nav shared by every page
-    pages/                # file = route (index.vue -> /, about.vue -> /about, games/[id].vue -> /games/<id>)
+    pages/                # file = route (index.vue -> /, about.vue -> /about, wishlist.vue -> /wishlist, games/[id].vue -> /games/<id>)
     components/           # GameCard, CurrencySelect, SearchFilters, GameSection, DiscountSidebar, LowestBadge, WishlistHeart (auto-imported)
     composables/          # useWishlist (localStorage, synced across tabs), storedList helper
     utils/                # auto-imported

@@ -601,7 +601,7 @@
         "cd frontend && npm run type-check && npm run lint pass",
         "Walk through every workflow in the browser"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "wish-04",
