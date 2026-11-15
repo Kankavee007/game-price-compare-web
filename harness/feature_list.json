@@ -546,7 +546,7 @@
         "Add route and tests with CheapShark mocked",
         "cd backend && pytest stays green; update README endpoint list"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "wish-02",
