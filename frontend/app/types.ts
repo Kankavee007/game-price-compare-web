@@ -1,5 +1,12 @@
+/** Lowest price CheapShark has seen for a game (backend/game_api/services/lowest.py) */
+export interface LowestPrice {
+  lowestPriceEver: number | null // in the response currency
+  lowestPriceEverDate: string | null // YYYY-MM-DD
+  isHistoricalLow: boolean // today's cheapest price is at (or below) the lowest ever
+}
+
 // Response shape of GET /api/search (see backend/game_api/services/search.py)
-export interface Game {
+export interface Game extends LowestPrice {
   gameID: string // CheapShark id, used for /games/<gameID>
   name: string
   price: number
@@ -20,7 +27,7 @@ export interface Deal {
   dealUrl: string
 }
 
-export interface GameDetail {
+export interface GameDetail extends LowestPrice {
   id: string
   name: string
   thumb: string | null

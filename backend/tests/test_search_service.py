@@ -15,11 +15,19 @@ SEARCH_RESULT = [
 ]
 
 
+GAMES = {
+    "82": {
+        "cheapestPriceEver": {"price": "0.99", "date": 1498153168},  # 2017-06-22
+        "deals": [{"dealID": "deal-82", "storeID": "1"}],
+    }
+}
+
+
 @pytest.fixture(autouse=True)
 def fake_apis(monkeypatch):
     monkeypatch.setattr(exchange, "get_rates", lambda: {"USD": 1, "THB": 35.0})
     monkeypatch.setattr(cheapshark, "search_games", lambda title: SEARCH_RESULT)
-    monkeypatch.setattr(cheapshark, "get_deal_stores", lambda ids: {"deal-82": "1"})
+    monkeypatch.setattr(cheapshark, "get_games", lambda ids: GAMES)
     monkeypatch.setattr(cheapshark, "get_store_names", lambda: {"1": "Steam"})
 
 
@@ -34,6 +42,9 @@ def test_converts_price_and_names_store():
             "storeID": "1",
             "storeName": "Steam",
             "dealUrl": "https://www.cheapshark.com/redirect?dealID=deal-82",
+            "lowestPriceEver": 34.65,
+            "lowestPriceEverDate": "2017-06-22",
+            "isHistoricalLow": False,
         }
     ]
 
@@ -44,8 +55,24 @@ def test_unknown_currency_raises():
 
 
 def test_unknown_store_gives_null_name(monkeypatch):
-    monkeypatch.setattr(cheapshark, "get_deal_stores", lambda ids: {})
+    monkeypatch.setattr(cheapshark, "get_games", lambda ids: {})
     game = search_prices("portal", "USD")[0]
 
     assert game["storeID"] is None
     assert game["storeName"] is None
+
+
+def test_unknown_game_in_lookup_gives_null_lowest_price(monkeypatch):
+    monkeypatch.setattr(cheapshark, "get_games", lambda ids: {})
+    game = search_prices("portal", "USD")[0]
+
+    assert game["lowestPriceEver"] is None
+    assert game["lowestPriceEverDate"] is None
+    assert game["isHistoricalLow"] is False
+
+
+def test_price_at_lowest_ever_is_historical_low(monkeypatch):
+    monkeypatch.setattr(cheapshark, "get_games", lambda ids: {
+        "82": {**GAMES["82"], "cheapestPriceEver": {"price": "9.99", "date": 1498153168}}
+    })
+    assert search_prices("portal", "THB")[0]["isHistoricalLow"] is True

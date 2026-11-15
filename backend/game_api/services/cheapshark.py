@@ -39,15 +39,6 @@ def get_games(game_ids):
     return games
 
 
-def get_deal_stores(game_ids):
-    """คืน {dealID: storeID} ของทุก deal ในเกมที่ระบุ"""
-    return {
-        deal["dealID"]: deal["storeID"]
-        for game in get_games(game_ids).values()
-        for deal in game.get("deals", [])
-    }
-
-
 def list_deals(params):
     """GET /deals with the given CheapShark params; returns (rows, total_pages).
 

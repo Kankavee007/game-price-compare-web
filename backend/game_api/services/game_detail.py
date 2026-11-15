@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 
 from ..errors import ConfigError, InvalidCurrencyError, UpstreamError
 from . import cheapshark, exchange, igdb
+from .lowest import lowest_price_fields
 
 log = logging.getLogger(__name__)
 
@@ -50,6 +51,11 @@ def get_game_detail(game_id, currency):
         "releaseDate": _to_date(found.get("first_release_date")),
         "currency": currency,
         "deals": deals,
+        **lowest_price_fields(
+            game.get("cheapestPriceEver"),
+            min((float(d["price"]) for d in game.get("deals", [])), default=None),
+            rate,
+        ),
     }
 
 

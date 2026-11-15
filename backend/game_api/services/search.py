@@ -1,5 +1,6 @@
 from ..errors import InvalidCurrencyError
 from . import cheapshark, exchange
+from .lowest import lowest_price_fields
 
 
 def search_prices(query, currency):
@@ -15,7 +16,13 @@ def search_prices(query, currency):
     rate = rates[currency]
 
     games = cheapshark.search_games(query)
-    deal_stores = cheapshark.get_deal_stores([g["gameID"] for g in games])
+    # One /games?ids call gives every deal's store and each game's lowest price ever
+    details = cheapshark.get_games([g["gameID"] for g in games])
+    deal_stores = {
+        deal["dealID"]: deal["storeID"]
+        for game in details.values()
+        for deal in game.get("deals", [])
+    }
     store_names = cheapshark.get_store_names()
 
     results = []
@@ -31,5 +38,10 @@ def search_prices(query, currency):
             "storeID": store_id,
             "storeName": store_names.get(store_id) if store_id else None,
             "dealUrl": f"https://www.cheapshark.com/redirect?dealID={deal_id}",
+            **lowest_price_fields(
+                details.get(game["gameID"], {}).get("cheapestPriceEver"),
+                float(game["cheapest"]),
+                rate,
+            ),
         })
     return results

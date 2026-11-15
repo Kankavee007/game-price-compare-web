@@ -497,7 +497,7 @@
         "Update types.ts and add tests (chunking, null data, failure fallback, compare in USD)",
         "cd backend && pytest stays green"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "lowest-02",
