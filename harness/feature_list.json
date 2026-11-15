@@ -294,7 +294,7 @@
         "cd backend && pytest stays green",
         "Update README endpoint list"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "search-02",

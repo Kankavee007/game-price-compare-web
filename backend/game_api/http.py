@@ -15,6 +15,15 @@ def _with_user_agent(headers):
 
 def get_json(url, params=None, headers=None):
     """GET แล้วคืน JSON ใส่ timeout กับ User-Agent ให้ทุกครั้ง error ทุกแบบกลายเป็น UpstreamError"""
+    data, _ = get_json_with_headers(url, params, headers)
+    return data
+
+
+def get_json_with_headers(url, params=None, headers=None):
+    """Like get_json, but also returns the response headers.
+
+    CheapShark /deals puts the page count in a header (X-Total-Page-Count), not in the body.
+    """
     try:
         res = requests.get(
             url,
@@ -25,7 +34,7 @@ def get_json(url, params=None, headers=None):
         if res.status_code == 404:
             raise UpstreamNotFoundError(f"{url}: 404 Not Found")
         res.raise_for_status()
-        return res.json()
+        return res.json(), res.headers
     except (requests.RequestException, ValueError) as err:
         raise UpstreamError(f"{url}: {err}") from err
 

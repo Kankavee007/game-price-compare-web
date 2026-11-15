@@ -20,3 +20,10 @@ class ConfigError(Exception):
 
 class InvalidCurrencyError(ValueError):
     """สกุลเงินที่ผู้ใช้ขอไม่มีในตารางอัตราแลกเปลี่ยน"""
+
+
+class InvalidParamError(ValueError):
+    """A query parameter from the user is invalid (bad number, unknown sort...). Routes answer 400.
+
+    The message names the parameter and is safe to show to the user.
+    """
