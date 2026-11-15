@@ -561,10 +561,11 @@
         "alternate": [
           "Game already in the wishlist: button shows 'Remove from wishlist' and removes it on click",
           "Heart icon on a game card toggles the same wishlist without opening the page",
-          "Wishlist changed in another tab: count updates (storage event)"
+          "Wishlist changed in another tab: count updates (storage event)",
+          "Private/incognito window: the wishlist saves normally; the browser clears it when the window closes (sites cannot reliably detect private mode, so no special case)"
         ],
         "error": [
-          "localStorage unavailable or full (private mode): a short message says the wishlist cannot be saved on this browser; the page does not crash",
+          "localStorage blocked or full (site data blocked, old Safari private mode): a short message says the wishlist cannot be saved on this browser; the page does not crash",
           "Stored data is broken JSON: treated as an empty wishlist"
         ]
       },
@@ -574,7 +575,7 @@
         "cd frontend && npm run type-check && npm run lint pass",
         "Walk through every workflow in the browser, including a private window"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "wish-03",
