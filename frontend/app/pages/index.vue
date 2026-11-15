@@ -41,6 +41,14 @@ function toPageNumber(value: unknown): number {
 }
 
 const hasQuery = computed(() => query.value.trim() !== '')
+// Nothing typed and no filter: show the landing sections instead of results
+const showLanding = computed(() => !hasQuery.value && filterCount.value === 0)
+
+// Landing sections. "Top rated" sorts by Metacritic score; "New releases" needs on sale +
+// Steam 80%+, else page 0 is all future placeholder dates (checked live 2026-11-15).
+const TOP_RATED: Partial<DealFilters> = { sort: 'rating', onSale: true }
+const NEW_RELEASES: Partial<DealFilters> = { sort: 'newest', minRating: 80, onSale: true }
+const FREE_NOW: Partial<DealFilters> = { maxPrice: 0, onSale: true }
 const filterCount = computed(() => activeFilterCount(filters.value))
 const rangeError = computed(() => priceRangeError(filters.value))
 
@@ -117,22 +125,41 @@ async function loadMore() {
   loadingMore.value = false
 }
 
+/** The URL query for a search (without page) */
+function searchQuery(q: string, cur: Currency, f: DealFilters): Record<string, string> {
+  return {
+    ...(q && { q }),
+    ...(cur !== 'USD' && { currency: cur }),
+    ...filtersToQuery(f),
+  }
+}
+
 watch(
   [query, currency, filters],
   () => {
     clearTimeout(timer)
     timer = setTimeout(runSearch, DEBOUNCE_MS)
     // replace, not push: typing should not add a history entry per keystroke
-    const q = query.value.trim()
-    router.replace({
-      query: {
-        ...(q && { q }),
-        ...(currency.value !== 'USD' && { currency: currency.value }),
-        ...filtersToQuery(filters.value),
-      },
-    })
+    router.replace({ query: searchQuery(query.value.trim(), currency.value, filters.value) })
   },
   { deep: true },
+)
+
+// The URL changed from outside this page (a "See all" link, the header "Search" link): load
+// that search. Our own router.replace calls give the same search back, so they are skipped.
+// Both sides are parsed first, so bad values left in the URL (max=abc) do not count as a change.
+watch(
+  () => route.query,
+  (rq) => {
+    const q = typeof rq.q === 'string' ? rq.q : ''
+    const incoming = searchQuery(q.trim(), toCurrency(rq.currency), filtersFromQuery(rq))
+    const current = searchQuery(query.value.trim(), currency.value, filters.value)
+    if (JSON.stringify(incoming) === JSON.stringify(current)) return
+    query.value = q
+    currency.value = toCurrency(rq.currency)
+    filters.value = filtersFromQuery(rq)
+    window.scrollTo({ top: 0 })
+  },
 )
 
 /** Pages 0..upTo, RESTORE_CONCURRENCY requests at a time, returned in page order */
@@ -209,6 +236,22 @@ useHead({ title: () => query.value.trim() })
       </template>
       <template v-else>No games match these filters</template>
     </p>
+
+    <div v-if="showLanding">
+      <GameSection title="Top rated deals" :currency="currency" :filters="TOP_RATED" />
+      <GameSection
+        title="New releases on sale"
+        :currency="currency"
+        :filters="NEW_RELEASES"
+        released-only
+      />
+      <GameSection
+        title="Free right now"
+        :currency="currency"
+        :filters="FREE_NOW"
+        hide-when-empty
+      />
+    </div>
 
     <div
       v-if="games.length"

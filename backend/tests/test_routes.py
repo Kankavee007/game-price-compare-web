@@ -121,3 +121,35 @@ def test_stores_upstream_error_is_502(client, monkeypatch):
 
     assert res.status_code == 502
     assert res.get_json() == {"error": "store list unavailable, try again later"}
+
+
+@pytest.mark.parametrize(
+    "url, route_module, name, value",
+    [
+        ("/api/deals", "deals", "find_deals", {"results": [], "page": 0, "totalPages": 1}),
+        ("/api/stores", "stores", "list_active_stores", []),
+    ],
+)
+def test_shared_responses_are_cacheable(client, monkeypatch, url, route_module, name, value):
+    module = {"deals": deals_route, "stores": stores_route}[route_module]
+    monkeypatch.setattr(module, name, lambda *args: value)
+    res = client.get(url)
+
+    assert res.status_code == 200
+    assert res.headers["Cache-Control"] == "public, s-maxage=900, stale-while-revalidate=300"
+
+
+@pytest.mark.parametrize(
+    "url, route_module, name",
+    [("/api/deals", "deals", "find_deals"), ("/api/stores", "stores", "list_active_stores")],
+)
+def test_errors_are_not_cacheable(client, monkeypatch, url, route_module, name):
+    def fail(*args):
+        raise UpstreamError("down")
+
+    module = {"deals": deals_route, "stores": stores_route}[route_module]
+    monkeypatch.setattr(module, name, fail)
+    res = client.get(url)
+
+    assert res.status_code == 502
+    assert "s-maxage" not in res.headers.get("Cache-Control", "")

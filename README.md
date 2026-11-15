@@ -14,7 +14,7 @@ frontend/
     app.vue               # root: <NuxtLayout> + <NuxtPage>, title template
     layouts/default.vue   # header + nav shared by every page
     pages/                # file = route (index.vue -> /, about.vue -> /about, games/[id].vue -> /games/<id>)
-    components/           # GameCard, CurrencySelect, SearchFilters (auto-imported)
+    components/           # GameCard, CurrencySelect, SearchFilters, GameSection (auto-imported)
     utils/                # auto-imported
       apiGet.ts           #   fetch /api/* with abort + 30 s timeout, ApiError(status)
       searchGames.ts      #   GET /api/search
@@ -100,6 +100,8 @@ Locally, put them in `backend/.env` (git-ignored, copy from `.env.example`). Nev
 `vercel.json` uses [Vercel Services](https://vercel.com/docs/services) (beta): `frontend/` is built with `nuxt generate` into static HTML (no Node server at runtime) and `backend/` runs as a Python function. `/api/*` goes to Flask, everything else to the frontend, on one domain.
 
 Pages are prerendered at build time, so they must not fetch data on the server. `/games/<id>` cannot be prerendered (the ids are dynamic): it is client-only (`routeRules` in `nuxt.config.ts`), and `vercel.json` serves the SPA shell `200.html` for it. Any other unknown path gets `404.html`. If a page ever needs server-side data from Flask, it needs a Vercel service binding for the API URL, because relative `/api` URLs only work in the browser.
+
+`/api/deals` and `/api/stores` answer the same for every visitor, so successful responses carry `Cache-Control: public, s-maxage=900, stale-while-revalidate=300` (`SHARED_CACHE_CONTROL` in `config.py`): the Vercel CDN keeps them 15 min, and browsers may show a copy up to 5 min old while they refresh it. Error responses are never cached. Check a deployment with the `x-vercel-cache` response header (`HIT` on a repeat request).
 
 1. Push to GitHub
 2. Import the repo on vercel.com (Root Directory: repo root)

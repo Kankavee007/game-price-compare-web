@@ -17,3 +17,8 @@ SEARCH_LIMIT = 25  # CheapShark ให้ค้นราคาหลายเก
 DEALS_PAGE_SIZE = 30  # results per /api/deals page (CheapShark allows up to 60)
 DEALS_CACHE_SECONDS = 60 * 15  # 15 นาที: landing page lists are the same for every visitor
 DEALS_CACHE_MAX_ENTRIES = 200  # drop the oldest entry above this, so memory stays bounded
+# Cache-Control for /api responses that are the same for every visitor (deal lists, stores).
+# s-maxage: the Vercel CDN keeps them 15 min. There is no max-age, so a browser treats its copy
+# as stale at once, but stale-while-revalidate still lets it show that copy for up to 5 min while
+# it refreshes in the background (checked in Chrome 2026-11-15).
+SHARED_CACHE_CONTROL = "public, s-maxage=900, stale-while-revalidate=300"
