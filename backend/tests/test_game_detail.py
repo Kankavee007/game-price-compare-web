@@ -4,6 +4,8 @@ from game_api import create_app
 from game_api.errors import ConfigError, UpstreamError, UpstreamNotFoundError
 from game_api.services import cheapshark, exchange, igdb
 
+REAL_FIND_GAME = igdb.find_game  # fake_apis replaces it in every test
+
 CHEAPSHARK_GAME = {
     "info": {"title": "LEGO Batman", "steamAppID": "21000", "thumb": "https://example.com/thumb.jpg"},
     "cheapestPriceEver": {"price": "2.28", "date": 1759177295},
@@ -55,6 +57,7 @@ def test_returns_igdb_info_and_deals_sorted_by_price(client):
     assert body["criticRating"] == 80
     assert body["summary"] == "Bricks."
     assert body["releaseDate"] == "2008-09-23"
+    assert body["genreTags"] == [{"id": 31, "name": "Adventure"}, {"id": 8, "name": "Platform"}]
     assert body["currency"] == "USD"
     assert [d["storeName"] for d in body["deals"]] == ["Fanatical", "GOG", "Steam"]
     assert body["deals"][1] == {
@@ -104,6 +107,8 @@ def test_igdb_failure_or_no_match_still_shows_prices(client, monkeypatch, error)
     assert body["criticRating"] is None
     assert body["summary"] is None
     assert body["releaseDate"] is None
+    assert body["similarGames"] == []
+    assert body["genreTags"] == []
     assert len(body["deals"]) == 3
 
 
@@ -174,3 +179,32 @@ def test_no_lowest_price_data(client, monkeypatch):
 
     assert body["lowestPriceEver"] is None
     assert body["isHistoricalLow"] is False
+
+
+def test_similar_games_with_cover_and_limit(client, monkeypatch):
+    similar = [{"id": i, "name": f"Game {i}", "cover": {"image_id": f"co{i}"}} for i in range(8)]
+    similar[1] = {"id": 1, "name": "No cover"}
+    similar.insert(0, {"id": 99})  # no name: skipped
+    monkeypatch.setattr(
+        igdb, "find_game", lambda steam_app_id, title: {**IGDB_GAME, "similar_games": similar}
+    )
+    body = client.get("/api/games/612").get_json()
+
+    assert len(body["similarGames"]) == 6
+    assert body["similarGames"][0] == {
+        "name": "Game 0",
+        "cover": "https://images.igdb.com/igdb/image/upload/t_cover_big/co0.jpg",
+    }
+    assert body["similarGames"][1] == {"name": "No cover", "cover": None}
+
+
+def test_no_similar_games(client):
+    assert client.get("/api/games/612").get_json()["similarGames"] == []
+
+
+def test_igdb_query_asks_for_similar_games(monkeypatch):
+    sent = []
+    monkeypatch.setattr(igdb, "_get_token", lambda: "token")
+    monkeypatch.setattr(igdb, "post_json", lambda url, body, headers: sent.append(body) or [IGDB_GAME])
+    REAL_FIND_GAME("21000", "LEGO Batman")
+    assert "similar_games.name" in sent[0] and "similar_games.cover.image_id" in sent[0]

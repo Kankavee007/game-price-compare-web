@@ -27,6 +27,33 @@ export interface Deal {
   dealUrl: string
 }
 
+/** IGDB genre (GET /api/genres) */
+export interface Genre {
+  id: number
+  name: string
+}
+
+/** One game of GET /api/browse; gameID and price are null when CheapShark does not sell it */
+export interface BrowseGame {
+  name: string
+  cover: string | null
+  rating: number | null // 0-100
+  gameID: string | null
+  price: number | null
+}
+
+export interface BrowseResult {
+  genre: Genre
+  currency: Currency
+  games: BrowseGame[]
+}
+
+/** IGDB similar game: no CheapShark id, so the page links to a search by name */
+export interface SimilarGame {
+  name: string
+  cover: string | null
+}
+
 export interface GameDetail extends LowestPrice {
   id: string
   name: string
@@ -38,6 +65,8 @@ export interface GameDetail extends LowestPrice {
   criticRating: number | null // 0-100, IGDB critics
   summary: string | null
   releaseDate: string | null // YYYY-MM-DD
+  similarGames: SimilarGame[] // from IGDB, up to 6; [] when none or IGDB failed
+  genreTags: Genre[] // same as genres, with the IGDB id for /browse?genre=<id>
   currency: Currency
   deals: Deal[] // cheapest first
 }

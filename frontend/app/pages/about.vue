@@ -35,7 +35,8 @@ useHead({ title: 'About' })
         >, refreshed every 30 minutes.
       </li>
       <li>
-        Game info on the detail page (genres, ratings, cover, release date):
+        Game info on the detail page (genres, ratings, cover, release date, similar games) and the
+        popular games on the Browse page:
         <a
           href="https://www.igdb.com/"
           target="_blank"

@@ -23,6 +23,11 @@ DEALS_CACHE_MAX_ENTRIES = 200  # drop the oldest entry above this, so memory sta
 # browsers only see "public". Without Vercel (local Flask, Docker) a browser does see
 # stale-while-revalidate and may show its copy for up to 5 min while it refreshes.
 SHARED_CACHE_CONTROL = "public, s-maxage=900, stale-while-revalidate=300"
+GENRES_CACHE_SECONDS = 60 * 60 * 24  # 1 วัน: IGDB genres hardly ever change
+BROWSE_CACHE_SECONDS = 60 * 60 * 6  # 6 ชั่วโมง: one browse costs up to 13 upstream calls
+BROWSE_LIMIT = 12  # games per genre
+BROWSE_LOOKUP_WORKERS = 4  # CheapShark lookups at the same time (be polite to a free API)
+
 # Price alerts (POST /api/alerts): best-effort limit per client IP, kept in memory per
 # serverless instance, so it slows down abuse but is not a hard global limit.
 # Per action: setting alerts is the normal use (one per game), the manage email is rarely needed

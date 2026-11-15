@@ -144,13 +144,20 @@ function formatDate(isoDate: string) {
             </button>
           </div>
 
-          <ul v-if="game.genres.length" class="flex flex-wrap gap-2" aria-label="Genres">
-            <li
-              v-for="genre in game.genres"
-              :key="genre"
-              class="bg-gray-700 text-sm px-3 py-1 rounded-full"
-            >
-              {{ genre }}
+          <ul v-if="game.genreTags.length" class="flex flex-wrap gap-2" aria-label="Genres">
+            <li v-for="genre in game.genreTags" :key="genre.id">
+              <NuxtLink
+                :to="{
+                  path: '/browse',
+                  query: {
+                    genre: String(genre.id),
+                    ...(currency !== 'USD' && { currency }),
+                  },
+                }"
+                class="block bg-gray-700 hover:bg-gray-600 text-sm px-3 py-1 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                :title="`Browse popular ${genre.name} games`"
+                >{{ genre.name }}</NuxtLink
+              >
             </li>
           </ul>
 
@@ -250,6 +257,41 @@ function formatDate(isoDate: string) {
             </a>
           </li>
         </ol>
+      </section>
+
+      <!-- IGDB similar games. Hidden when there are none or IGDB failed (prices still show) -->
+      <section v-if="game.similarGames.length" aria-labelledby="similar-heading" class="space-y-4">
+        <h2 id="similar-heading" class="text-xl font-semibold">Similar games</h2>
+        <ul class="grid grid-cols-3 sm:grid-cols-6 gap-4">
+          <li v-for="similar in game.similarGames" :key="similar.name">
+            <!-- IGDB ids are not CheapShark ids, so search by name -->
+            <NuxtLink
+              :to="{
+                path: '/',
+                query: { q: similar.name, ...(currency !== 'USD' && { currency }) },
+              }"
+              class="block space-y-2 rounded-lg group focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+            >
+              <img
+                v-if="similar.cover"
+                :src="similar.cover"
+                alt=""
+                loading="lazy"
+                class="w-full aspect-[3/4] object-cover rounded-lg bg-gray-800 group-hover:opacity-80 transition"
+              />
+              <div
+                v-else
+                class="w-full aspect-[3/4] rounded-lg bg-gray-800 flex items-center justify-center text-3xl"
+                aria-hidden="true"
+              >
+                🎮
+              </div>
+              <p class="text-sm leading-snug line-clamp-2 group-hover:underline">
+                {{ similar.name }}
+              </p>
+            </NuxtLink>
+          </li>
+        </ul>
       </section>
     </article>
   </div>

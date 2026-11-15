@@ -8,6 +8,7 @@ from .lowest import lowest_price_fields
 log = logging.getLogger(__name__)
 
 IGDB_COVER_URL = "https://images.igdb.com/igdb/image/upload/t_cover_big/{}.jpg"
+SIMILAR_LIMIT = 6
 
 
 def get_game_detail(game_id, currency):
@@ -44,11 +45,18 @@ def get_game_detail(game_id, currency):
         "thumb": info.get("thumb"),
         "cover": IGDB_COVER_URL.format(cover_id) if cover_id else None,
         "genres": [g["name"] for g in found.get("genres", []) if g.get("name")],
+        # Same genres with their IGDB id, so the page can link to /browse?genre=<id>
+        "genreTags": [
+            {"id": g["id"], "name": g["name"]}
+            for g in found.get("genres", [])
+            if g.get("name") and isinstance(g.get("id"), int)
+        ],
         "rating": _round(found.get("rating")),
         "ratingCount": found.get("rating_count"),
         "criticRating": _round(found.get("aggregated_rating")),
         "summary": found.get("summary"),
         "releaseDate": _to_date(found.get("first_release_date")),
+        "similarGames": _similar_games(found.get("similar_games")),
         "currency": currency,
         "deals": deals,
         **lowest_price_fields(
@@ -85,6 +93,27 @@ def _find_igdb(steam_app_id, title):
     except (UpstreamError, KeyError, TypeError, ValueError):
         log.exception("IGDB lookup failed for steam_app_id=%r title=%r", steam_app_id, title)
     return {}
+
+
+def _similar_games(games):
+    """IGDB similar_games as [{name, cover}], at most SIMILAR_LIMIT; [] when there are none.
+
+    Only the name is used to link (to the search page): IGDB ids are not CheapShark ids.
+    """
+    if not isinstance(games, list):
+        return []
+    result = []
+    for game in games:
+        if not isinstance(game, dict) or not game.get("name"):
+            continue
+        cover_id = (game.get("cover") or {}).get("image_id")
+        result.append({
+            "name": game["name"],
+            "cover": IGDB_COVER_URL.format(cover_id) if cover_id else None,
+        })
+        if len(result) == SIMILAR_LIMIT:
+            break
+    return result
 
 
 def _round(value):
