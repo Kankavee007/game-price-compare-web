@@ -39,6 +39,27 @@ def get_json_with_headers(url, params=None, headers=None):
         raise UpstreamError(f"{url}: {err}") from err
 
 
+def get_text(url, params=None, headers=None):
+    """GET and return (status code, body text) without raising on 4xx/5xx.
+
+    For APIs that answer in plain text and use the status code for normal outcomes
+    (CheapShark /alerts?action=manage answers 400 "No alerts found for email").
+
+    Raises:
+        UpstreamError: network error or timeout (the message may contain the URL)
+    """
+    try:
+        res = requests.get(
+            url,
+            params=params,
+            headers=_with_user_agent(headers),
+            timeout=config.REQUEST_TIMEOUT,
+        )
+        return res.status_code, res.text
+    except requests.RequestException as err:
+        raise UpstreamError(f"{url}: {err}") from err
+
+
 def post_json(url, body, headers=None):
     """POST แล้วคืน JSON ใส่ timeout กับ User-Agent ให้ทุกครั้ง error ทุกแบบกลายเป็น UpstreamError"""
     try:

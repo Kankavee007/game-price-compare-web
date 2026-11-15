@@ -13,14 +13,30 @@ export class ApiError extends Error {
 }
 
 /** GET a /api URL and return its JSON. Throws ApiError on a non-2xx answer or a timeout. */
-export async function apiGet<T>(url: string, signal?: AbortSignal): Promise<T> {
+export function apiGet<T>(url: string, signal?: AbortSignal): Promise<T> {
+  return apiRequest<T>(url, {}, signal)
+}
+
+/**
+ * POST a JSON body to a /api URL and return its JSON. Same timeout and errors as apiGet.
+ * Used when the data must stay out of the URL (an email address in access logs).
+ */
+export function apiPost<T>(url: string, body: unknown, signal?: AbortSignal): Promise<T> {
+  return apiRequest<T>(
+    url,
+    { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) },
+    signal,
+  )
+}
+
+async function apiRequest<T>(url: string, init: RequestInit, signal?: AbortSignal): Promise<T> {
   const timeout = AbortSignal.timeout(TIMEOUT_MS)
   // Abort on whichever comes first: the caller cancels (newer request) or the timeout
   const combined = signal ? AbortSignal.any([signal, timeout]) : timeout
 
   let res: Response
   try {
-    res = await fetch(url, { signal: combined })
+    res = await fetch(url, { ...init, signal: combined })
   } catch (err) {
     if (timeout.aborted && !signal?.aborted) {
       throw new ApiError('The server took too long to respond. Please try again.', 0)

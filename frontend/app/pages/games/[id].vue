@@ -206,6 +206,13 @@ function formatDate(isoDate: string) {
           </span>
         </p>
 
+        <PriceAlertForm
+          v-if="game.deals.length && game.deals[0]!.price > 0"
+          :game-id="game.id"
+          :currency="game.currency"
+          :current-price="game.deals[0]!.price"
+        />
+
         <p v-if="game.deals.length === 0" class="text-gray-400">
           No store sells this game right now.
         </p>

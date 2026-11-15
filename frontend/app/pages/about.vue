@@ -46,6 +46,21 @@ useHead({ title: 'About' })
       </li>
     </ul>
 
+    <h2 class="text-xl font-semibold text-white pt-2">Your data</h2>
+    <ul class="list-disc pl-6 space-y-2">
+      <li>
+        Your wishlist and recently viewed games are saved in this browser only. There are no
+        accounts.
+      </li>
+      <li>
+        Price alerts: when you ask to be emailed about a price drop, your email address, the game
+        and your target price are sent to CheapShark, which sends the alert and lets you manage or
+        stop it. This site does not store your email. To see or delete your alerts, use
+        <NuxtLink to="/alerts" class="text-blue-400 hover:underline">Manage price alerts</NuxtLink
+        >.
+      </li>
+    </ul>
+
     <p class="text-sm text-gray-400">
       Converted prices are estimates. The store page always shows the final price.
     </p>

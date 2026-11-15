@@ -116,6 +116,19 @@ export interface GamePrice extends LowestPrice {
   dealUrl: string
 }
 
+/** POST /api/alerts answer; priceUSD is the target price CheapShark got (it works in USD) */
+export interface PriceAlertResult {
+  ok: true
+  priceUSD: number
+}
+
+/** POST /api/alerts/manage answer: what CheapShark did with the request */
+export interface ManageAlertsResult {
+  ok: true
+  /** sent: link emailed now; alreadySent: a link was emailed recently, no new one; noAlerts: nothing to manage */
+  status: 'sent' | 'alreadySent' | 'noAlerts'
+}
+
 export const CURRENCIES = [
   { code: 'USD', label: 'USD 💵' },
   { code: 'THB', label: 'THB 🇹🇭' },

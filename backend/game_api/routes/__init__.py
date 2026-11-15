@@ -1,4 +1,4 @@
-from . import deals, games, health, prices, search, stores
+from . import alerts, deals, games, health, prices, search, stores
 
 
 def register_routes(app):
@@ -7,4 +7,5 @@ def register_routes(app):
     app.register_blueprint(deals.bp)
     app.register_blueprint(stores.bp)
     app.register_blueprint(prices.bp)
+    app.register_blueprint(alerts.bp)
     app.register_blueprint(health.bp)
