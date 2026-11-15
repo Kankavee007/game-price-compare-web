@@ -150,3 +150,27 @@ def test_get_game_returns_none_on_cheapshark_404(monkeypatch):
     monkeypatch.setattr(cheapshark, "get_json", not_found)
 
     assert cheapshark.get_game("999999999") is None
+
+
+def test_lowest_price_ever_compares_the_cheapest_deal(client):
+    body = client.get("/api/games/612?currency=THB").get_json()
+
+    assert body["lowestPriceEver"] == 79.8  # 2.28 USD * 35
+    assert body["lowestPriceEverDate"] == "2025-09-29"
+    assert body["isHistoricalLow"] is False  # cheapest deal is 10.00 USD
+
+
+def test_cheapest_deal_at_lowest_ever_is_historical_low(client, monkeypatch):
+    game = {**CHEAPSHARK_GAME, "cheapestPriceEver": {"price": "10.00", "date": 1759177295}}
+    monkeypatch.setattr(cheapshark, "get_game", lambda game_id: game)
+
+    assert client.get("/api/games/612").get_json()["isHistoricalLow"] is True
+
+
+def test_no_lowest_price_data(client, monkeypatch):
+    game = {key: value for key, value in CHEAPSHARK_GAME.items() if key != "cheapestPriceEver"}
+    monkeypatch.setattr(cheapshark, "get_game", lambda game_id: game)
+    body = client.get("/api/games/612").get_json()
+
+    assert body["lowestPriceEver"] is None
+    assert body["isHistoricalLow"] is False

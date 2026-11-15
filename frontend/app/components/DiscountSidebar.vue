@@ -83,6 +83,7 @@ function price(value: number) {
                 price(deal.price)
               }}</span>
               <s class="text-gray-500 text-xs whitespace-nowrap">{{ price(deal.retailPrice) }}</s>
+              <LowestBadge v-if="deal.isHistoricalLow" />
             </p>
           </div>
           <span

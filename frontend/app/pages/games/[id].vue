@@ -59,6 +59,15 @@ function backToSearch(event: MouseEvent) {
   }
 }
 
+// "12% above the lowest price": today's cheapest store against the lowest price ever.
+// null when there is nothing to compare (no data, no deals, or the lowest ever was free).
+const aboveLowestPercent = computed(() => {
+  const g = game.value
+  const cheapest = g?.deals[0]?.price
+  if (!g || g.isHistoricalLow || !g.lowestPriceEver || cheapest === undefined) return null
+  return Math.round(((cheapest - g.lowestPriceEver) / g.lowestPriceEver) * 100)
+})
+
 function formatPrice(value: number) {
   return `${value.toFixed(2)} ${game.value?.currency ?? ''}`
 }
@@ -141,6 +150,28 @@ function formatDate(isoDate: string) {
           <h2 class="text-xl font-semibold">Prices in every store</h2>
           <CurrencySelect v-model="currency" />
         </div>
+
+        <p
+          v-if="game.lowestPriceEver !== null"
+          class="flex flex-wrap items-center gap-x-3 gap-y-1 text-gray-300"
+        >
+          <span>
+            Lowest ever:
+            <span class="font-semibold text-white">{{ formatPrice(game.lowestPriceEver) }}</span>
+            <template v-if="game.lowestPriceEverDate">
+              on {{ formatDate(game.lowestPriceEverDate) }}</template
+            >
+          </span>
+          <LowestBadge v-if="game.isHistoricalLow" />
+          <span v-else-if="aboveLowestPercent !== null && aboveLowestPercent > 0" class="text-sm">
+            (cheapest store now is {{ aboveLowestPercent }}% above the lowest price)
+          </span>
+          <!-- CheapShark stores the lowest price in USD only; we convert it at today's rate -->
+          <span v-if="game.currency !== 'USD'" class="basis-full text-xs text-gray-400">
+            Lowest price is recorded in USD and converted at today's exchange rate, so it can differ
+            from what it cost in {{ game.currency }} at the time.
+          </span>
+        </p>
 
         <p v-if="game.deals.length === 0" class="text-gray-400">
           No store sells this game right now.

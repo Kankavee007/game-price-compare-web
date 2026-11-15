@@ -1,9 +1,13 @@
+import logging
 import math
 from datetime import datetime, timezone
 
 from .. import config
-from ..errors import InvalidCurrencyError, InvalidParamError
+from ..errors import InvalidCurrencyError, InvalidParamError, UpstreamError
 from . import cheapshark, exchange
+from .lowest import lowest_price_fields
+
+log = logging.getLogger(__name__)
 
 # Our sort names -> CheapShark sortBy. CheapShark's default direction is already the one users
 # expect (checked live 2026-11-15): Price cheapest first; Savings, Metacritic, Reviews highest
@@ -81,8 +85,30 @@ def _from_deals(query, f, rate, currency):
         if gid not in cheapest or float(row["salePrice"]) < float(cheapest[gid]["salePrice"]):
             cheapest[gid] = row
 
-    results = [_from_deal_row(row, rate, currency, store_names) for row in cheapest.values()]
-    return [r for r in results if _in_range(r["price"], f)], total_pages
+    rows = [row for row in cheapest.values() if _in_range(round(float(row["salePrice"]) * rate, 2), f)]
+    lowest = _lowest_prices([row["gameID"] for row in rows])
+    results = [
+        {
+            **_from_deal_row(row, rate, currency, store_names),
+            **lowest_price_fields(lowest.get(row["gameID"]), float(row["salePrice"]), rate),
+        }
+        for row in rows
+    ]
+    return results, total_pages
+
+
+def _lowest_prices(game_ids):
+    """{gameID: cheapestPriceEver} from /games?ids (one call per 25 games).
+
+    The lowest price ever is extra info: if the lookup fails, the deals are still returned
+    (with null lowest-price fields) and the error is logged.
+    """
+    try:
+        games = cheapshark.get_games(game_ids)
+    except (UpstreamError, KeyError, TypeError, ValueError):
+        log.exception("lowest price lookup failed for %d games", len(game_ids))
+        return {}
+    return {gid: game.get("cheapestPriceEver") for gid, game in games.items()}
 
 
 def _relevance(query, f, rate, currency):
@@ -113,21 +139,24 @@ def _relevance(query, f, rate, currency):
         gid = game["gameID"]
         if rated is not None and gid not in rated:
             continue
+        detail = details.get(gid, {})
+        # (USD price, converted deal) so the historical-low check can compare in USD
         deals = [
-            _from_game_deal(d, rate, store_names)
-            for d in details.get(gid, {}).get("deals", [])
+            (float(d["price"]), _from_game_deal(d, rate, store_names))
+            for d in detail.get("deals", [])
             if (not f["stores"] or d["storeID"] in f["stores"])
             and (not f["on_sale"] or float(d["savings"]) > 0)
         ]
-        deals = [d for d in deals if _in_range(d["price"], f)]
+        deals = [d for d in deals if _in_range(d[1]["price"], f)]
         if not deals:
             continue
-        best = min(deals, key=lambda d: (d["price"], d["storeName"] or ""))
+        best_usd, best = min(deals, key=lambda d: (d[1]["price"], d[1]["storeName"] or ""))
         rating_row = (rated or {}).get(gid, {})
         results.append({
             "gameID": gid,
             "name": game["external"],
             **best,
+            **lowest_price_fields(detail.get("cheapestPriceEver"), best_usd, rate),
             "currency": currency,
             "thumb": game["thumb"],
             "steamRating": _steam_rating(rating_row),

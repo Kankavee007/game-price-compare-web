@@ -14,7 +14,7 @@ frontend/
     app.vue               # root: <NuxtLayout> + <NuxtPage>, title template
     layouts/default.vue   # header + nav shared by every page
     pages/                # file = route (index.vue -> /, about.vue -> /about, games/[id].vue -> /games/<id>)
-    components/           # GameCard, CurrencySelect, SearchFilters, GameSection, DiscountSidebar (auto-imported)
+    components/           # GameCard, CurrencySelect, SearchFilters, GameSection, DiscountSidebar, LowestBadge (auto-imported)
     utils/                # auto-imported
       apiGet.ts           #   fetch /api/* with abort + 30 s timeout, ApiError(status)
       searchGames.ts      #   GET /api/search
@@ -41,6 +41,7 @@ backend/
     services/             # business logic + external APIs, no Flask imports
       search.py           #   search_prices(): combine games, stores, exchange rate
       deals.py            #   find_deals(): filters, sort, paging, one row per game (cheapest store)
+      lowest.py           #   lowest_price_fields(): lowest price ever + isHistoricalLow (compared in USD)
       stores.py           #   list_active_stores(): for the store filter, sorted by name
       game_detail.py      #   get_game_detail(): CheapShark deals + IGDB info, sorted cheapest first
       cheapshark.py       #   CheapShark API (search, one game, many games, /deals cached 15 min, store list cached 1 day)

@@ -1,6 +1,6 @@
 import pytest
 
-from game_api.errors import InvalidCurrencyError, InvalidParamError
+from game_api.errors import InvalidCurrencyError, InvalidParamError, UpstreamError
 from game_api.services import cheapshark, exchange
 from game_api.services.deals import find_deals
 
@@ -40,6 +40,15 @@ def deals_api(monkeypatch):
     monkeypatch.setattr(exchange, "get_rates", lambda: {"USD": 1, "THB": 35.0})
     monkeypatch.setattr(cheapshark, "list_deals", fake_list_deals)
     monkeypatch.setattr(cheapshark, "get_store_names", lambda: {"1": "Steam", "7": "GOG"})
+    # Lowest price lookup: no data unless a test sets log.lowest
+    log.lowest = {}
+    log.lookups = []
+
+    def fake_get_games(ids):
+        log.lookups.append(list(ids))
+        return {i: {"cheapestPriceEver": log.lowest[i]} for i in ids if i in log.lowest}
+
+    monkeypatch.setattr(cheapshark, "get_games", fake_get_games)
     return log
 
 
@@ -93,6 +102,9 @@ def test_result_shape_and_conversion(deals_api):
             "steamRating": 90,
             "metacriticScore": 85,
             "releaseDate": "2023-11-14",
+            "lowestPriceEver": None,
+            "lowestPriceEverDate": None,
+            "isHistoricalLow": False,
         }
     ]
 
@@ -180,6 +192,40 @@ def test_unknown_currency_raises(deals_api):
         find_deals("", "XYZ", {})
 
 
+def test_lowest_price_ever_is_converted_and_compared_in_usd(deals_api):
+    deals_api.rows = [row("1", "10.00"), row("2", "5.00")]
+    deals_api.lowest = {
+        "1": {"price": "4.99", "date": 1534118400},  # 2018-08-13, cheaper than today
+        "2": {"price": "5.00", "date": 1534118400},  # today's price is the lowest
+    }
+    results = find_deals("", "THB", {})["results"]
+
+    assert deals_api.lookups == [["1", "2"]]
+    assert [(r["lowestPriceEver"], r["lowestPriceEverDate"], r["isHistoricalLow"]) for r in results] == [
+        (174.65, "2018-08-13", False),
+        (175.0, "2018-08-13", True),
+    ]
+
+
+def test_lowest_price_lookup_only_for_games_in_range(deals_api):
+    deals_api.rows = [row("1", "1.00"), row("2", "50.00")]
+    find_deals("", "USD", {"maxPrice": "10"})
+    assert deals_api.lookups == [["1"]]
+
+
+def test_lowest_price_lookup_failure_still_returns_deals(deals_api, monkeypatch, caplog):
+    def down(ids):
+        raise UpstreamError("down")
+
+    monkeypatch.setattr(cheapshark, "get_games", down)
+    results = find_deals("", "USD", {})["results"]
+
+    assert results[0]["gameID"] == "1"
+    assert results[0]["lowestPriceEver"] is None
+    assert results[0]["isHistoricalLow"] is False
+    assert "lowest price lookup failed" in caplog.text
+
+
 # --- sort=relevance (title search) ---------------------------------------------------------
 
 SEARCH = [
@@ -235,6 +281,21 @@ def test_relevance_min_rating_keeps_only_rated_games(title_search):
 
     assert title_search[0] == {"title": "portal", "steamRating": 90, "pageSize": 60}
     assert [(r["name"], r["steamRating"]) for r in results] == [("Portal 2", 95)]
+
+
+def test_relevance_lowest_price_uses_the_chosen_store(title_search, monkeypatch):
+    games = {
+        "82": {**GAMES["82"], "cheapestPriceEver": {"price": "4.99", "date": 1534118400}},
+        "99": GAMES["99"],
+    }
+    monkeypatch.setattr(cheapshark, "get_games", lambda ids: {i: games[i] for i in ids})
+
+    all_stores = find_deals("portal", "USD", {})["results"]
+    steam_only = find_deals("portal", "USD", {"stores": "1"})["results"]
+
+    assert (all_stores[0]["lowestPriceEver"], all_stores[0]["isHistoricalLow"]) == (4.99, True)
+    assert (steam_only[0]["price"], steam_only[0]["isHistoricalLow"]) == (9.99, False)
+    assert all_stores[1]["lowestPriceEver"] is None  # no cheapestPriceEver for game 99
 
 
 def test_relevance_has_one_page_only(title_search):
