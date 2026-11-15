@@ -817,7 +817,7 @@
         "Cache /api/browse per genre for 6 hours (one browse costs up to 13 upstream calls)",
         "Tests with IGDB and CheapShark mocked; cd backend && pytest stays green; update README"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "discover-04",

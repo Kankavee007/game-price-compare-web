@@ -71,6 +71,17 @@ def _to_page_count(value):
         return 1
 
 
+def find_by_steam_app_id(steam_app_id):
+    """CheapShark games for a Steam app id: [{gameID, cheapest (USD), thumb, ...}], often 1.
+
+    One Steam app can map to several CheapShark games (an old and a remastered listing).
+    """
+    data = get_json(f"{config.CHEAPSHARK_BASE_URL}/games", {"steamAppID": steam_app_id})
+    if not isinstance(data, list):
+        raise UpstreamError("CheapShark Steam lookup: unexpected response")
+    return data
+
+
 def get_game(game_id):
     """ข้อมูลเกมหนึ่งเกมจาก CheapShark: info (title, steamAppID, thumb), cheapestPriceEver, deals
 

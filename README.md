@@ -5,7 +5,7 @@ My first web project by myself
 ค้นหาราคาเกมที่ถูกที่สุดจาก [CheapShark](https://www.cheapshark.com/) และแปลงสกุลเงินด้วย [open.er-api.com](https://open.er-api.com/) หน้ารายละเอียดเกมแสดงข้อมูลเกม (ประเภท คะแนน ปก) จาก [IGDB](https://www.igdb.com/) และราคาทุกร้านเรียงจากถูกไปแพง
 
 - `frontend/`: Nuxt 4 (Vue 3) + Tailwind CSS, prerendered to static HTML
-- `backend/`: Flask (`/api/search`, `/api/deals`, `/api/stores`, `/api/prices`, `POST /api/alerts`, `POST /api/alerts/manage`, `/api/games/<id>`, `/api/health`)
+- `backend/`: Flask (`/api/search`, `/api/deals`, `/api/stores`, `/api/prices`, `POST /api/alerts`, `POST /api/alerts/manage`, `/api/genres`, `/api/browse`, `/api/games/<id>`, `/api/health`)
 
 ```
 frontend/
@@ -43,6 +43,7 @@ backend/
       prices.py           #   GET /api/prices?ids=1,2&currency= (cheapest deal of up to 50 games, for the wishlist)
       alerts.py           #   POST /api/alerts {email, gameID, price, currency} (CheapShark email alert; never logs the email)
                           #   POST /api/alerts/manage {email} (CheapShark emails a link to manage alerts)
+      browse.py           #   GET /api/genres (IGDB, cached 1 day), GET /api/browse?genre=12&currency= (popular games of a genre, cached 6 h)
       games.py            #   GET /api/games/<id>
       health.py           #   GET /api/health
     services/             # business logic + external APIs, no Flask imports
@@ -52,9 +53,10 @@ backend/
       stores.py           #   list_active_stores(): for the store filter, sorted by name
       prices.py           #   get_prices(): cheapest deal per game for many ids
       alerts.py           #   set_alert(), manage_alerts(): validate, convert price to USD, per IP per hour: 10 alerts, 5 manage emails (in memory)
+      browse.py           #   get_genres(), browse(): IGDB popular PC games + CheapShark price by Steam app id (4 lookups at a time)
       game_detail.py      #   get_game_detail(): CheapShark deals + IGDB info (and similar games), sorted cheapest first
       cheapshark.py       #   CheapShark API (search, one game, many games, /deals cached 15 min, store list cached 1 day, price alerts)
-      igdb.py             #   IGDB API (Twitch app token cached in memory, match by Steam id then title)
+      igdb.py             #   IGDB API (Twitch app token cached in memory, match by Steam id then title, genres, popular games)
       exchange.py         #   USD exchange rates (cached 30 min, stale on error)
   tests/                  # one file per layer, external APIs mocked
 ```

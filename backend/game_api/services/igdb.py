@@ -32,14 +32,55 @@ def _get_token():
     return _token
 
 
+def _headers():
+    """IGDB auth headers (Twitch app token). Raises ConfigError when env vars are missing."""
+    return {
+        "Client-ID": config.TWITCH_CLIENT_ID,
+        "Authorization": f"Bearer {_get_token()}",
+    }
+
+
+def list_genres():
+    """All IGDB genres as [{id, name}] (about 23)."""
+    data = post_json(
+        config.IGDB_BASE_URL + "/genres", body="fields name; limit 100;", headers=_headers()
+    )
+    if not isinstance(data, list):
+        raise UpstreamError("IGDB genres: unexpected response")
+    return [{"id": g["id"], "name": g["name"]} for g in data if "id" in g and g.get("name")]
+
+
+def popular_games(genre_id: int, limit: int):
+    """Most rated PC main games in a genre, with cover, rating and Steam app ids.
+
+    genre_id must be an int (checked by the caller), so nothing from outside is injected.
+    Sorted by total_rating_count: how many people rated it, a stand-in for "popular".
+    """
+    query = (
+        "fields name, cover.image_id, total_rating, "
+        "external_games.uid, external_games.external_game_source; "
+        f"where genres = ({int(genre_id)}) & platforms = ({PC_PLATFORM}) & game_type = {MAIN_GAME}; "
+        f"sort total_rating_count desc; limit {int(limit)};"
+    )
+    data = post_json(config.IGDB_BASE_URL + "/games", body=query, headers=_headers())
+    if not isinstance(data, list):
+        raise UpstreamError("IGDB popular games: unexpected response")
+    return data
+
+
+def steam_app_ids(game):
+    """Steam app ids of an IGDB game (external_game_source 1 = Steam), as strings."""
+    return [
+        str(e["uid"])
+        for e in game.get("external_games") or []
+        if isinstance(e, dict) and e.get("external_game_source") == STEAM_SOURCE and e.get("uid")
+    ]
+
+
 def find_game(steam_app_id: str | None, title: str | None):
     """search game by steam_app_id or title, return the best match or None"""
     # FIX: type hints now allow None; CheapShark gives steamAppID = null for games not on Steam.
-    token = _get_token()
-    headers = {
-        "Client-ID": config.TWITCH_CLIENT_ID,
-        "Authorization": f"Bearer {token}",
-    }
+    headers = _headers()
 
     url = config.IGDB_BASE_URL + "/games"
 
@@ -91,6 +132,7 @@ def find_game(steam_app_id: str | None, title: str | None):
 TITLE_SEARCH_LIMIT = 10  # enough to reach the real game in the searches we tried (it was 2nd or 3rd)
 MAIN_GAME = 0  # IGDB game_type 0 = main game (1 = DLC, 3 = bundle, 5 = mod, ...)
 PC_PLATFORM = 6  # IGDB platform 6 = PC (Microsoft Windows)
+STEAM_SOURCE = 1  # IGDB external_game_source 1 = Steam
 
 
 def _pick_best(games :list[dict], title :str):
