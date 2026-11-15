@@ -27,6 +27,12 @@ export interface Deal {
   dealUrl: string
 }
 
+/** IGDB similar game: no CheapShark id, so the page links to a search by name */
+export interface SimilarGame {
+  name: string
+  cover: string | null
+}
+
 export interface GameDetail extends LowestPrice {
   id: string
   name: string
@@ -38,6 +44,7 @@ export interface GameDetail extends LowestPrice {
   criticRating: number | null // 0-100, IGDB critics
   summary: string | null
   releaseDate: string | null // YYYY-MM-DD
+  similarGames: SimilarGame[] // from IGDB, up to 6; [] when none or IGDB failed
   currency: Currency
   deals: Deal[] // cheapest first
 }

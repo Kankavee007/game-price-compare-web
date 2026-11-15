@@ -52,7 +52,7 @@ backend/
       stores.py           #   list_active_stores(): for the store filter, sorted by name
       prices.py           #   get_prices(): cheapest deal per game for many ids
       alerts.py           #   set_alert(), manage_alerts(): validate, convert price to USD, per IP per hour: 10 alerts, 5 manage emails (in memory)
-      game_detail.py      #   get_game_detail(): CheapShark deals + IGDB info, sorted cheapest first
+      game_detail.py      #   get_game_detail(): CheapShark deals + IGDB info (and similar games), sorted cheapest first
       cheapshark.py       #   CheapShark API (search, one game, many games, /deals cached 15 min, store list cached 1 day, price alerts)
       igdb.py             #   IGDB API (Twitch app token cached in memory, match by Steam id then title)
       exchange.py         #   USD exchange rates (cached 30 min, stale on error)

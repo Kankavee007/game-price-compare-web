@@ -789,7 +789,7 @@
         "Show the section on pages/games/[id].vue linking to /?q=<name>",
         "cd frontend && npm run type-check && npm run lint pass; check in the browser"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "discover-03",
