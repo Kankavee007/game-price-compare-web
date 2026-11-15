@@ -2,6 +2,7 @@ import logging
 
 from flask import Blueprint, jsonify, request
 
+from .. import config
 from ..errors import InvalidCurrencyError, InvalidParamError, UpstreamError
 from ..services.deals import find_deals
 
@@ -15,7 +16,10 @@ def deals():
     currency = request.args.get("currency", "USD").strip().upper()
 
     try:
-        return jsonify(find_deals(query, currency, request.args))
+        res = jsonify(find_deals(query, currency, request.args))
+        # Only successful answers are cached; errors must not stick in the CDN for 15 min
+        res.headers["Cache-Control"] = config.SHARED_CACHE_CONTROL
+        return res
     except InvalidCurrencyError:
         return jsonify({"error": f"unsupported currency: {currency}"}), 400
     except InvalidParamError as err:
