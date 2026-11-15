@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "ask": [
+      "Bash(rm *)",
+      "Bash(rmdir *)",
+      "Bash(find * -delete*)",
+      "Bash(git reset --hard*)",
+      "Bash(git clean *)",
+      "Bash(git checkout -- *)",
+      "Bash(git restore *)",
+      "Bash(git stash drop*)",
+      "Bash(git stash clear*)",
+      "Bash(git branch -D *)",
+      "Bash(git push --force*)",
+      "Bash(git push -f*)",
+      "Bash(git rebase *)"
+    ]
+  }
+}
