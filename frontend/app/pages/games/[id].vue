@@ -144,13 +144,20 @@ function formatDate(isoDate: string) {
             </button>
           </div>
 
-          <ul v-if="game.genres.length" class="flex flex-wrap gap-2" aria-label="Genres">
-            <li
-              v-for="genre in game.genres"
-              :key="genre"
-              class="bg-gray-700 text-sm px-3 py-1 rounded-full"
-            >
-              {{ genre }}
+          <ul v-if="game.genreTags.length" class="flex flex-wrap gap-2" aria-label="Genres">
+            <li v-for="genre in game.genreTags" :key="genre.id">
+              <NuxtLink
+                :to="{
+                  path: '/browse',
+                  query: {
+                    genre: String(genre.id),
+                    ...(currency !== 'USD' && { currency }),
+                  },
+                }"
+                class="block bg-gray-700 hover:bg-gray-600 text-sm px-3 py-1 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                :title="`Browse popular ${genre.name} games`"
+                >{{ genre.name }}</NuxtLink
+              >
             </li>
           </ul>
 

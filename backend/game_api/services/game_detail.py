@@ -45,6 +45,12 @@ def get_game_detail(game_id, currency):
         "thumb": info.get("thumb"),
         "cover": IGDB_COVER_URL.format(cover_id) if cover_id else None,
         "genres": [g["name"] for g in found.get("genres", []) if g.get("name")],
+        # Same genres with their IGDB id, so the page can link to /browse?genre=<id>
+        "genreTags": [
+            {"id": g["id"], "name": g["name"]}
+            for g in found.get("genres", [])
+            if g.get("name") and isinstance(g.get("id"), int)
+        ],
         "rating": _round(found.get("rating")),
         "ratingCount": found.get("rating_count"),
         "criticRating": _round(found.get("aggregated_rating")),

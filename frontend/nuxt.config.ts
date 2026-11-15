@@ -18,6 +18,7 @@ export default defineNuxtConfig({
     // Prerendered shell; the list itself is read from localStorage in the browser (<ClientOnly>)
     '/wishlist': { prerender: true },
     '/alerts': { prerender: true },
+    '/browse': { prerender: true },
     // Client-only: game ids are dynamic, so these pages cannot be prerendered. A direct visit
     // gets the SPA shell (200.html), see the /games route in vercel.json.
     '/games/**': { ssr: false },

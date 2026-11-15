@@ -845,7 +845,7 @@
         "cd frontend && npm run type-check && npm run lint pass",
         "Walk through every workflow in the browser; update the about page"
       ],
-      "passes": false
+      "passes": true
     }
   ]
 }

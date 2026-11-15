@@ -17,6 +17,11 @@ const route = useRoute()
             >
           </li>
           <li>
+            <NuxtLink to="/browse" class="hover:text-white" active-class="text-white font-semibold"
+              >Browse</NuxtLink
+            >
+          </li>
+          <li>
             <NuxtLink
               to="/wishlist"
               class="hover:text-white"

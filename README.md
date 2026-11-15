@@ -13,7 +13,7 @@ frontend/
   app/
     app.vue               # root: <NuxtLayout> + <NuxtPage>, title template
     layouts/default.vue   # header + nav shared by every page
-    pages/                # file = route (index.vue -> /, about.vue -> /about, wishlist.vue -> /wishlist, alerts.vue -> /alerts, games/[id].vue -> /games/<id>)
+    pages/                # file = route (index.vue -> /, about.vue -> /about, wishlist.vue -> /wishlist, alerts.vue -> /alerts, browse.vue -> /browse?genre=<id>, games/[id].vue -> /games/<id>)
     components/           # GameCard, CurrencySelect, SearchFilters, GameSection, DiscountSidebar, LowestBadge, WishlistHeart, WishlistSaleNotice, RecentlyViewed, PriceAlertForm, QuickSearch (auto-imported)
     composables/          # useWishlist, useRecentlyViewed (localStorage, synced across tabs), storedList helper
     utils/                # auto-imported
@@ -23,6 +23,8 @@ frontend/
       getStores.ts        #   GET /api/stores
       getPrices.ts        #   GET /api/prices (wishlist prices)
       setPriceAlert.ts    #   POST /api/alerts (email price alert, email in the body only)
+      getGenres.ts        #   GET /api/genres
+      browseGenre.ts      #   GET /api/browse (popular games of a genre)
       manageAlerts.ts     #   POST /api/alerts/manage (CheapShark emails a link to manage alerts)
       dealFilters.ts      #   search filters <-> URL query (?min=&max=&sort=&stores=&sale=&rating=)
       getGameDetail.ts    #   GET /api/games/<id>

@@ -57,6 +57,7 @@ def test_returns_igdb_info_and_deals_sorted_by_price(client):
     assert body["criticRating"] == 80
     assert body["summary"] == "Bricks."
     assert body["releaseDate"] == "2008-09-23"
+    assert body["genreTags"] == [{"id": 31, "name": "Adventure"}, {"id": 8, "name": "Platform"}]
     assert body["currency"] == "USD"
     assert [d["storeName"] for d in body["deals"]] == ["Fanatical", "GOG", "Steam"]
     assert body["deals"][1] == {
@@ -107,6 +108,7 @@ def test_igdb_failure_or_no_match_still_shows_prices(client, monkeypatch, error)
     assert body["summary"] is None
     assert body["releaseDate"] is None
     assert body["similarGames"] == []
+    assert body["genreTags"] == []
     assert len(body["deals"]) == 3
 
 
