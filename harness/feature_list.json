@@ -737,7 +737,7 @@
         "cd backend && pytest; cd frontend && npm run type-check && npm run lint pass; update README",
         "Walk through every workflow in the browser; send one real manage email to the owner's address only, typed by the owner"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "discover-01",
