@@ -14,12 +14,14 @@ frontend/
     app.vue               # root: <NuxtLayout> + <NuxtPage>, title template
     layouts/default.vue   # header + nav shared by every page
     pages/                # file = route (index.vue -> /, about.vue -> /about, games/[id].vue -> /games/<id>)
-    components/           # GameCard, CurrencySelect, SearchFilters, GameSection, DiscountSidebar, LowestBadge (auto-imported)
+    components/           # GameCard, CurrencySelect, SearchFilters, GameSection, DiscountSidebar, LowestBadge, WishlistHeart (auto-imported)
+    composables/          # useWishlist (localStorage, synced across tabs), storedList helper
     utils/                # auto-imported
       apiGet.ts           #   fetch /api/* with abort + 30 s timeout, ApiError(status)
       searchGames.ts      #   GET /api/search
       listDeals.ts        #   GET /api/deals (search page results with filters)
       getStores.ts        #   GET /api/stores
+      getPrices.ts        #   GET /api/prices (wishlist prices)
       dealFilters.ts      #   search filters <-> URL query (?min=&max=&sort=&stores=&sale=&rating=)
       getGameDetail.ts    #   GET /api/games/<id>
     types.ts              # Game, GameDetail, DealResult, Store, DealFilters, CURRENCIES (match the API responses)

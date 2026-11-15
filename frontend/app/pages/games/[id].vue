@@ -48,6 +48,9 @@ useHead({
   title: () => game.value?.name ?? (notFound.value ? 'Game not found' : ''),
 })
 
+const wishlist = useWishlist()
+const inWishlist = computed(() => wishlist.has(id.value))
+
 const image = computed(() => game.value?.cover ?? game.value?.thumb ?? null)
 
 // Came from the search page: go back in history so its search (kept in the URL) comes back.
@@ -110,6 +113,29 @@ function formatDate(isoDate: string) {
 
         <div class="space-y-3 min-w-0">
           <h1 class="text-3xl font-bold break-words">{{ game.name }}</h1>
+
+          <div class="flex flex-wrap items-center gap-3">
+            <template v-if="inWishlist">
+              <span class="text-red-400 font-semibold">♥ In wishlist</span>
+              <button
+                type="button"
+                class="px-3 py-1.5 rounded-lg border border-gray-600 text-sm hover:bg-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                @click="wishlist.remove(game.id)"
+              >
+                Remove from wishlist
+              </button>
+            </template>
+            <button
+              v-else
+              type="button"
+              class="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-500 font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+              @click="
+                wishlist.add({ gameID: game.id, name: game.name, thumb: game.thumb ?? game.cover })
+              "
+            >
+              ♡ Add to wishlist
+            </button>
+          </div>
 
           <ul v-if="game.genres.length" class="flex flex-wrap gap-2" aria-label="Genres">
             <li

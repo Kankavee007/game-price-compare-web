@@ -87,6 +87,28 @@ export interface DealFilters {
   minRating: number | null // Steam rating percent
 }
 
+/** A game saved in the wishlist (localStorage, see composables/useWishlist.ts) */
+export interface WishlistItem {
+  gameID: string
+  name: string
+  thumb: string | null
+  addedAt: string // ISO date-time
+}
+
+// Response shape of GET /api/prices (see backend/game_api/services/prices.py)
+export interface GamePrice extends LowestPrice {
+  gameID: string
+  name: string | null
+  thumb: string | null
+  price: number
+  retailPrice: number
+  savings: number // percent, 0-100
+  currency: Currency
+  storeID: string
+  storeName: string | null
+  dealUrl: string
+}
+
 export const CURRENCIES = [
   { code: 'USD', label: 'USD 💵' },
   { code: 'THB', label: 'THB 🇹🇭' },
