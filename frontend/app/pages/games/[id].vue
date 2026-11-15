@@ -166,6 +166,11 @@ function formatDate(isoDate: string) {
           <span v-else-if="aboveLowestPercent !== null && aboveLowestPercent > 0" class="text-sm">
             (cheapest store now is {{ aboveLowestPercent }}% above the lowest price)
           </span>
+          <!-- CheapShark stores the lowest price in USD only; we convert it at today's rate -->
+          <span v-if="game.currency !== 'USD'" class="basis-full text-xs text-gray-400">
+            Lowest price is recorded in USD and converted at today's exchange rate, so it can differ
+            from what it cost in {{ game.currency }} at the time.
+          </span>
         </p>
 
         <p v-if="game.deals.length === 0" class="text-gray-400">
