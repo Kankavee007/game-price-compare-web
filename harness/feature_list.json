@@ -384,6 +384,38 @@
       "passes": true
     },
     {
+      "id": "search-05",
+      "phase": 4,
+      "category": "functional",
+      "description": "Loaded 'Load more' pages are kept in the URL, so Back from a game page restores all of them",
+      "workflows": {
+        "main": [
+          "User browses deals under 5 USD and clicks 'Load more' twice; URL becomes /?max=5&page=2",
+          "User opens a game from the third page and presses Back",
+          "All three pages are shown again (no duplicates) and the page scrolls back to where the user was"
+        ],
+        "alternate": [
+          "Shared link with page=2: the first three pages load",
+          "page is higher than the last page: everything up to the last page loads, 'Load more' is hidden",
+          "User changes the search or a filter: page is removed from the URL and the list starts again at page 0",
+          "Relevance text search (one page only): page is ignored"
+        ],
+        "error": [
+          "Bad page value in the URL (page=abc, page=-1): treated as page 0",
+          "page above 20: capped at 20, so a link cannot make the page send hundreds of requests",
+          "One of the pages fails while restoring: the same error message as a failed search, with the filters kept"
+        ]
+      },
+      "steps": [
+        "Read page from the route query on mount; load pages 0..page in parallel and combine them without duplicates",
+        "Write page to the URL with router.replace after each successful 'Load more'; leave it out when it is 0",
+        "Restore the scroll position after the restored pages render when coming back through history",
+        "cd frontend && npm run type-check && npm run lint pass",
+        "Walk through every workflow in the browser"
+      ],
+      "passes": true
+    },
+    {
       "id": "home-01",
       "phase": 5,
       "category": "functional",

@@ -1,8 +1,19 @@
 <script setup lang="ts">
 // listDeals, the filter helpers (utils/) and the components are auto-imported by Nuxt
-import { toCurrency, type Currency, type DealFilters, type DealResult } from '~/types'
+import {
+  toCurrency,
+  type Currency,
+  type DealFilters,
+  type DealPage,
+  type DealResult,
+} from '~/types'
 
 const DEBOUNCE_MS = 500
+// A link with ?page=N loads pages 0..N at once; capped so a link cannot trigger hundreds of requests
+const MAX_RESTORE_PAGE = 20
+// Restored pages load this many at a time: 21 at once overwhelmed the dev proxy (503s)
+// and would hit CheapShark's rate limit
+const RESTORE_CONCURRENCY = 4
 
 // The search and its filters live in the URL (/?q=portal&currency=THB&max=300&sort=newest) so
 // the browser Back button from a detail page restores them, and a search can be shared as a link.
@@ -23,6 +34,12 @@ const loadingMore = ref(false)
 const loadMoreError = ref(false)
 const hasMore = computed(() => page.value + 1 < totalPages.value)
 
+// ?page=N in the URL: the last "Load more" page. Back from a detail page loads them all again.
+function toPageNumber(value: unknown): number {
+  if (typeof value !== 'string' || !/^\d+$/.test(value)) return 0
+  return Math.min(Number(value), MAX_RESTORE_PAGE)
+}
+
 const hasQuery = computed(() => query.value.trim() !== '')
 const filterCount = computed(() => activeFilterCount(filters.value))
 const rangeError = computed(() => priceRangeError(filters.value))
@@ -31,7 +48,7 @@ let timer: ReturnType<typeof setTimeout> | undefined
 let controller: AbortController | undefined
 let moreController: AbortController | undefined
 
-async function runSearch() {
+async function runSearch(upTo = 0) {
   const q = query.value.trim()
 
   // Cancel the previous request so a slow old response can't overwrite a newer one.
@@ -64,10 +81,12 @@ async function runSearch() {
   error.value = null
 
   try {
-    const result = await listDeals(q, currency.value, filters.value, 0, signal)
-    games.value = result.results
-    page.value = 0
-    totalPages.value = result.totalPages
+    // Pages 0..upTo (upTo > 0 only when restoring a URL with ?page=N)
+    const pages = await loadPages(q, upTo, signal)
+    games.value = withoutDuplicates(pages.flatMap((r) => r.results))
+    totalPages.value = pages[0]!.totalPages
+    // A page past the end (old link, fewer deals now) counts as the last page
+    page.value = Math.min(upTo, totalPages.value - 1)
   } catch (err) {
     if (signal.aborted) return
     games.value = []
@@ -87,11 +106,10 @@ async function loadMore() {
   try {
     const next = page.value + 1
     const result = await listDeals(query.value.trim(), currency.value, filters.value, next, signal)
-    // A game can show up on two pages (prices change between requests): show it once
-    const shown = new Set(games.value.map((g) => g.gameID))
-    games.value = [...games.value, ...result.results.filter((g) => !shown.has(g.gameID))]
+    games.value = withoutDuplicates([...games.value, ...result.results])
     page.value = next
     totalPages.value = result.totalPages
+    router.replace({ query: { ...route.query, page: String(next) } })
   } catch {
     if (signal.aborted) return
     loadMoreError.value = true
@@ -117,9 +135,37 @@ watch(
   { deep: true },
 )
 
-// Coming back from a detail page or opening a shared link: search right away
-onMounted(() => {
-  if (hasQuery.value || filterCount.value > 0) runSearch()
+/** Pages 0..upTo, RESTORE_CONCURRENCY requests at a time, returned in page order */
+async function loadPages(q: string, upTo: number, signal: AbortSignal): Promise<DealPage[]> {
+  const pages: DealPage[] = []
+  let next = 0
+  async function worker() {
+    while (next <= upTo) {
+      const p = next++
+      pages[p] = await listDeals(q, currency.value, filters.value, p, signal)
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(RESTORE_CONCURRENCY, upTo + 1) }, worker))
+  return pages
+}
+
+// A game can show up on two pages (prices change between requests): show it once
+function withoutDuplicates(list: DealResult[]): DealResult[] {
+  const seen = new Set<string>()
+  return list.filter((g) => !seen.has(g.gameID) && seen.add(g.gameID))
+}
+
+// Coming back from a detail page or opening a shared link: search right away.
+// Vue Router saves the scroll position in history.state when leaving a page. Its own scroll
+// restore runs before the results arrive (the page is still short), so scroll again after them.
+onMounted(async () => {
+  if (!hasQuery.value && filterCount.value === 0) return
+  const saved = window.history.state?.scroll as { top?: number } | undefined
+  await runSearch(toPageNumber(route.query.page))
+  if (saved?.top) {
+    await nextTick()
+    window.scrollTo({ top: saved.top })
+  }
 })
 
 // Leaving the page (e.g. to /about) must not leave a timer or request running
