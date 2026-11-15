@@ -14,8 +14,8 @@ frontend/
     app.vue               # root: <NuxtLayout> + <NuxtPage>, title template
     layouts/default.vue   # header + nav shared by every page
     pages/                # file = route (index.vue -> /, about.vue -> /about, wishlist.vue -> /wishlist, games/[id].vue -> /games/<id>)
-    components/           # GameCard, CurrencySelect, SearchFilters, GameSection, DiscountSidebar, LowestBadge, WishlistHeart (auto-imported)
-    composables/          # useWishlist (localStorage, synced across tabs), storedList helper
+    components/           # GameCard, CurrencySelect, SearchFilters, GameSection, DiscountSidebar, LowestBadge, WishlistHeart, WishlistSaleNotice, RecentlyViewed (auto-imported)
+    composables/          # useWishlist, useRecentlyViewed (localStorage, synced across tabs), storedList helper
     utils/                # auto-imported
       apiGet.ts           #   fetch /api/* with abort + 30 s timeout, ApiError(status)
       searchGames.ts      #   GET /api/search

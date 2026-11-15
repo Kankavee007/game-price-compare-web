@@ -624,7 +624,7 @@
         "cd frontend && npm run type-check && npm run lint pass",
         "Check in the browser with and without sales in the wishlist"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "wish-05",
@@ -651,7 +651,7 @@
         "cd frontend && npm run type-check && npm run lint pass",
         "Walk through every workflow in the browser"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "alert-01",

@@ -95,6 +95,13 @@ export interface WishlistItem {
   addedAt: string // ISO date-time
 }
 
+/** A game page opened in this browser (localStorage, see composables/useRecentlyViewed.ts) */
+export interface RecentGame {
+  gameID: string
+  name: string
+  thumb: string | null
+}
+
 // Response shape of GET /api/prices (see backend/game_api/services/prices.py)
 export interface GamePrice extends LowestPrice {
   gameID: string

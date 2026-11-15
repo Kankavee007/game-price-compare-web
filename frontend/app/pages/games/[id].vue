@@ -17,6 +17,8 @@ const loading = ref(true)
 const error = ref<string | null>(null)
 const notFound = ref(false)
 
+const recent = useRecentlyViewed()
+
 let controller: AbortController | undefined
 
 async function load() {
@@ -31,6 +33,11 @@ async function load() {
 
   try {
     game.value = await getGameDetail(id.value, currency.value, signal)
+    recent.record({
+      gameID: id.value,
+      name: game.value.name,
+      thumb: game.value.thumb ?? game.value.cover,
+    })
   } catch (err) {
     if (signal.aborted) return
     game.value = null
