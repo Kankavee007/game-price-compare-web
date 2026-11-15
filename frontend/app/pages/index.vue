@@ -216,67 +216,83 @@ useHead({ title: () => query.value.trim() })
 
     <hr class="my-6 border-gray-700" />
 
-    <input
-      v-model="query"
-      type="search"
-      placeholder="Search game..."
-      aria-label="Search game"
-      class="w-full p-3 rounded-xl bg-gray-800 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
-    />
+    <!-- Desktop: results on the left, discount sidebar on the right. Smaller: sidebar below. -->
+    <div class="lg:grid lg:grid-cols-[minmax(0,1fr)_18rem] lg:gap-8">
+      <div>
+        <input
+          v-model="query"
+          type="search"
+          placeholder="Search game..."
+          aria-label="Search game"
+          class="w-full p-3 rounded-xl bg-gray-800 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
+        />
 
-    <SearchFilters v-model="filters" :currency="currency" :has-query="hasQuery" />
+        <SearchFilters v-model="filters" :currency="currency" :has-query="hasQuery" />
 
-    <p v-if="loading" class="text-center text-gray-400" role="status">Searching…</p>
-    <p v-else-if="error" class="text-center text-red-400" role="alert">⚠️ {{ error }}</p>
-    <p v-else-if="searched && games.length === 0" class="text-center text-gray-400">
-      <template v-if="searched.query">
-        No games found for "{{ searched.query }}"<template v-if="searched.filtered">
-          with these filters</template
+        <p v-if="loading" class="text-center text-gray-400" role="status">Searching…</p>
+        <p v-else-if="error" class="text-center text-red-400" role="alert">⚠️ {{ error }}</p>
+        <p v-else-if="searched && games.length === 0" class="text-center text-gray-400">
+          <template v-if="searched.query">
+            No games found for "{{ searched.query }}"<template v-if="searched.filtered">
+              with these filters</template
+            >
+          </template>
+          <template v-else>No games match these filters</template>
+        </p>
+
+        <div v-if="showLanding">
+          <GameSection
+            :limit="8"
+            title="Top rated deals"
+            :currency="currency"
+            :filters="TOP_RATED"
+          />
+          <GameSection
+            :limit="8"
+            title="New releases on sale"
+            :currency="currency"
+            :filters="NEW_RELEASES"
+            released-only
+          />
+          <GameSection
+            :limit="8"
+            title="Free right now"
+            :currency="currency"
+            :filters="FREE_NOW"
+            hide-when-empty
+          />
+        </div>
+
+        <div
+          v-if="games.length"
+          class="grid gap-6 grid-cols-2 sm:grid-cols-3 md:grid-cols-4"
+          :class="{ 'opacity-50': loading }"
         >
-      </template>
-      <template v-else>No games match these filters</template>
-    </p>
+          <GameCard v-for="game in games" :key="game.gameID" :game="game" />
+        </div>
 
-    <div v-if="showLanding">
-      <GameSection title="Top rated deals" :currency="currency" :filters="TOP_RATED" />
-      <GameSection
-        title="New releases on sale"
-        :currency="currency"
-        :filters="NEW_RELEASES"
-        released-only
-      />
-      <GameSection
-        title="Free right now"
-        :currency="currency"
-        :filters="FREE_NOW"
-        hide-when-empty
-      />
-    </div>
+        <div v-if="games.length && !loading && hasMore" class="flex justify-center mt-8">
+          <button
+            type="button"
+            class="px-6 py-3 rounded-xl border focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:opacity-60"
+            :class="
+              loadMoreError
+                ? 'border-red-500 text-red-300 hover:bg-red-500/10'
+                : 'border-gray-600 bg-gray-800 hover:bg-gray-700'
+            "
+            :disabled="loadingMore"
+            @click="loadMore"
+          >
+            <template v-if="loadingMore">Loading…</template>
+            <template v-else-if="loadMoreError">Failed to load, try again</template>
+            <template v-else>Load more</template>
+          </button>
+        </div>
+      </div>
 
-    <div
-      v-if="games.length"
-      class="grid gap-6 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
-      :class="{ 'opacity-50': loading }"
-    >
-      <GameCard v-for="game in games" :key="game.gameID" :game="game" />
-    </div>
-
-    <div v-if="games.length && !loading && hasMore" class="flex justify-center mt-8">
-      <button
-        type="button"
-        class="px-6 py-3 rounded-xl border focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:opacity-60"
-        :class="
-          loadMoreError
-            ? 'border-red-500 text-red-300 hover:bg-red-500/10'
-            : 'border-gray-600 bg-gray-800 hover:bg-gray-700'
-        "
-        :disabled="loadingMore"
-        @click="loadMore"
-      >
-        <template v-if="loadingMore">Loading…</template>
-        <template v-else-if="loadMoreError">Failed to load, try again</template>
-        <template v-else>Load more</template>
-      </button>
+      <aside class="mt-10 lg:mt-0 lg:sticky lg:top-4 lg:self-start">
+        <DiscountSidebar :currency="currency" />
+      </aside>
     </div>
   </div>
 </template>

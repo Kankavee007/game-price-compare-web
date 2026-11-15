@@ -14,7 +14,7 @@ frontend/
     app.vue               # root: <NuxtLayout> + <NuxtPage>, title template
     layouts/default.vue   # header + nav shared by every page
     pages/                # file = route (index.vue -> /, about.vue -> /about, games/[id].vue -> /games/<id>)
-    components/           # GameCard, CurrencySelect, SearchFilters, GameSection (auto-imported)
+    components/           # GameCard, CurrencySelect, SearchFilters, GameSection, DiscountSidebar (auto-imported)
     utils/                # auto-imported
       apiGet.ts           #   fetch /api/* with abort + 30 s timeout, ApiError(status)
       searchGames.ts      #   GET /api/search

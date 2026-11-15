@@ -74,12 +74,12 @@ const headingId = useId()
     <!-- Phone: one row that scrolls sideways. md and up: a grid. -->
     <div
       v-if="loading"
-      class="flex gap-4 overflow-hidden md:grid md:grid-cols-5"
+      class="flex gap-4 overflow-hidden md:grid md:grid-cols-4"
       role="status"
       aria-label="Loading"
     >
       <div
-        v-for="n in 5"
+        v-for="n in 4"
         :key="n"
         class="w-40 shrink-0 md:w-auto h-60 rounded-2xl bg-gray-800 animate-pulse"
       />
@@ -104,7 +104,7 @@ const headingId = useId()
 
     <ul
       v-else
-      class="flex gap-4 overflow-x-auto snap-x pb-2 md:grid md:grid-cols-5 md:overflow-visible md:pb-0"
+      class="flex gap-4 overflow-x-auto snap-x pb-2 md:grid md:grid-cols-4 md:overflow-visible md:pb-0"
     >
       <li v-for="game in games" :key="game.gameID" class="w-40 shrink-0 snap-start md:w-auto">
         <GameCard :game="game" />
