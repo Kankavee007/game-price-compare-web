@@ -89,3 +89,68 @@ def test_get_games_splits_ids_into_calls_of_25(monkeypatch):
 def test_get_games_empty_makes_no_call(monkeypatch):
     monkeypatch.setattr(cheapshark, "get_json", lambda *a, **k: pytest.fail("called"))
     assert cheapshark.get_games([]) == {}
+
+
+# --- stores ---------------------------------------------------------------------------------
+
+STORES = [
+    {"storeID": "1", "storeName": "Steam", "isActive": 1, "images": {"logo": "/img/stores/logos/0.png"}},
+    {"storeID": "4", "storeName": "Amazon", "isActive": 0, "images": {}},
+]
+
+
+@pytest.fixture
+def stores_http(monkeypatch):
+    monkeypatch.setattr(cheapshark, "_stores", [])
+    monkeypatch.setattr(cheapshark, "_store_fetched_at", 0.0)
+    calls = Calls()
+    calls.fail = False
+
+    def fake(url, params=None, headers=None):
+        calls.append(url)
+        if calls.fail:
+            raise UpstreamError("down")
+        return STORES
+
+    monkeypatch.setattr(cheapshark, "get_json", fake)
+    return calls
+
+
+def test_get_stores_shape_and_logo_url(stores_http):
+    assert cheapshark.get_stores() == [
+        {"storeID": "1", "storeName": "Steam", "isActive": True,
+         "logo": "https://www.cheapshark.com/img/stores/logos/0.png"},
+        {"storeID": "4", "storeName": "Amazon", "isActive": False, "logo": None},
+    ]
+
+
+def test_get_stores_is_cached(stores_http):
+    cheapshark.get_stores()
+    cheapshark.get_stores()
+    assert len(stores_http) == 1
+
+
+def test_get_stores_uses_old_cache_when_api_fails(stores_http, monkeypatch):
+    now = {"t": 1000.0}
+    monkeypatch.setattr(cheapshark.time, "time", lambda: now["t"])
+    first = cheapshark.get_stores()
+    now["t"] += config.STORE_CACHE_SECONDS + 1
+    stores_http.fail = True
+
+    assert cheapshark.get_stores() == first
+    assert len(stores_http) == 2  # it did try again
+
+
+def test_get_stores_raises_without_cache(stores_http):
+    stores_http.fail = True
+    with pytest.raises(UpstreamError):
+        cheapshark.get_stores()
+
+
+def test_get_store_names_includes_inactive_stores(stores_http):
+    assert cheapshark.get_store_names() == {"1": "Steam", "4": "Amazon"}
+
+
+def test_get_store_names_is_empty_when_api_fails(stores_http):
+    stores_http.fail = True
+    assert cheapshark.get_store_names() == {}

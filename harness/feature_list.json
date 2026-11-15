@@ -317,7 +317,7 @@
         "Add the route and tests (active filter, logo URL, cache, 502)",
         "cd backend && pytest stays green"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "search-03",

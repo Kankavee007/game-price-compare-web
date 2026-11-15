@@ -4,6 +4,7 @@ from game_api import config, create_app
 from game_api.errors import InvalidCurrencyError, InvalidParamError, UpstreamError
 from game_api.routes import deals as deals_route
 from game_api.routes import search as search_route
+from game_api.routes import stores as stores_route
 
 
 @pytest.fixture
@@ -100,3 +101,23 @@ def test_deals_bad_param_end_to_end(client):
 
     assert res.status_code == 400
     assert "minPrice" in res.get_json()["error"]
+
+
+def test_stores_returns_service_result(client, monkeypatch):
+    stores = [{"storeID": "1", "storeName": "Steam", "logo": None}]
+    monkeypatch.setattr(stores_route, "list_active_stores", lambda: stores)
+    res = client.get("/api/stores")
+
+    assert res.status_code == 200
+    assert res.get_json() == stores
+
+
+def test_stores_upstream_error_is_502(client, monkeypatch):
+    def fail():
+        raise UpstreamError("down")
+
+    monkeypatch.setattr(stores_route, "list_active_stores", fail)
+    res = client.get("/api/stores")
+
+    assert res.status_code == 502
+    assert res.get_json() == {"error": "store list unavailable, try again later"}

@@ -4,7 +4,7 @@ from .. import config
 from ..errors import UpstreamError, UpstreamNotFoundError
 from ..http import get_json, get_json_with_headers
 
-_store_cache = {}
+_stores = []  # see get_stores
 _store_fetched_at = 0.0
 
 # {cache key: (fetched_at, rows, total_pages)}; dicts keep insertion order, so the first key is the oldest
@@ -94,19 +94,50 @@ def get_game(game_id):
     return data
 
 
-def get_store_names():
-    """คืน {storeID: storeName} cache ไว้ 1 วัน เพราะรายชื่อร้านแทบไม่เปลี่ยน"""
-    global _store_cache, _store_fetched_at
+def get_stores():
+    """All CheapShark stores as [{storeID, storeName, isActive, logo}], cached 1 day.
+
+    The store list hardly ever changes. If CheapShark fails and an old list is cached, the old
+    list is returned.
+
+    Raises:
+        UpstreamError: CheapShark failed and nothing is cached yet
+    """
+    global _stores, _store_fetched_at
 
     now = time.time()
-    if _store_cache and now - _store_fetched_at < config.STORE_CACHE_SECONDS:
-        return _store_cache
+    if _stores and now - _store_fetched_at < config.STORE_CACHE_SECONDS:
+        return _stores
 
     try:
         data = get_json(f"{config.CHEAPSHARK_BASE_URL}/stores")
-        _store_cache = {s["storeID"]: s["storeName"] for s in data}
-        _store_fetched_at = now
-    except (UpstreamError, KeyError, TypeError):
-        # ชื่อร้านไม่ใช่ข้อมูลหลัก ถ้าดึงไม่ได้ใช้ cache เก่า (หรือว่าง) ไปก่อน
-        pass
-    return _store_cache
+        stores = [_to_store(s) for s in data]
+    except (UpstreamError, KeyError, TypeError, AttributeError) as err:
+        if _stores:
+            return _stores
+        raise UpstreamError(f"CheapShark stores: {err}") from err
+
+    _stores = stores
+    _store_fetched_at = now
+    return _stores
+
+
+def _to_store(store):
+    logo = (store.get("images") or {}).get("logo")
+    return {
+        "storeID": store["storeID"],
+        "storeName": store["storeName"],
+        "isActive": bool(store.get("isActive")),
+        "logo": f"https://www.cheapshark.com{logo}" if logo else None,
+    }
+
+
+def get_store_names():
+    """คืน {storeID: storeName} ของทุกร้าน (รวมร้านที่ปิดแล้ว เพราะ deal เก่าอาจยังอ้างถึง)
+
+    ชื่อร้านไม่ใช่ข้อมูลหลัก ถ้าดึงไม่ได้และไม่มี cache คืน {} แทนการ raise
+    """
+    try:
+        return {s["storeID"]: s["storeName"] for s in get_stores()}
+    except UpstreamError:
+        return {}

@@ -5,7 +5,7 @@ My first web project by myself
 ค้นหาราคาเกมที่ถูกที่สุดจาก [CheapShark](https://www.cheapshark.com/) และแปลงสกุลเงินด้วย [open.er-api.com](https://open.er-api.com/) หน้ารายละเอียดเกมแสดงข้อมูลเกม (ประเภท คะแนน ปก) จาก [IGDB](https://www.igdb.com/) และราคาทุกร้านเรียงจากถูกไปแพง
 
 - `frontend/`: Nuxt 4 (Vue 3) + Tailwind CSS, prerendered to static HTML
-- `backend/`: Flask (`/api/search`, `/api/deals`, `/api/games/<id>`, `/api/health`)
+- `backend/`: Flask (`/api/search`, `/api/deals`, `/api/stores`, `/api/games/<id>`, `/api/health`)
 
 ```
 frontend/
@@ -32,13 +32,15 @@ backend/
     routes/               # HTTP layer only: read params, call a service, map errors to status codes
       search.py           #   GET /api/search
       deals.py            #   GET /api/deals?q=&currency=&minPrice=&maxPrice=&sort=&page=&stores=&onSale=&minRating=
+      stores.py           #   GET /api/stores (active stores with logo)
       games.py            #   GET /api/games/<id>
       health.py           #   GET /api/health
     services/             # business logic + external APIs, no Flask imports
       search.py           #   search_prices(): combine games, stores, exchange rate
       deals.py            #   find_deals(): filters, sort, paging, one row per game (cheapest store)
+      stores.py           #   list_active_stores(): for the store filter, sorted by name
       game_detail.py      #   get_game_detail(): CheapShark deals + IGDB info, sorted cheapest first
-      cheapshark.py       #   CheapShark API (search, one game, many games, /deals cached 15 min, store names cached 1 day)
+      cheapshark.py       #   CheapShark API (search, one game, many games, /deals cached 15 min, store list cached 1 day)
       igdb.py             #   IGDB API (Twitch app token cached in memory, match by Steam id then title)
       exchange.py         #   USD exchange rates (cached 30 min, stale on error)
   tests/                  # one file per layer, external APIs mocked
