@@ -13,8 +13,12 @@ defineProps<{ game: Game }>()
   >
     <img :src="game.thumb" :alt="game.name" loading="lazy" class="w-full h-60 object-cover" />
 
-    <span class="absolute top-2 left-2 bg-black/70 text-xs px-2 py-1 rounded">
-      🏷️ {{ game.storeName ?? 'Store' }}
+    <!-- Store label and "Lowest ever" stacked in the top-left corner (cards are narrow on phones) -->
+    <span class="absolute top-2 left-2 flex flex-col items-start gap-1">
+      <span class="bg-black/70 text-xs px-2 py-1 rounded">
+        🏷️ {{ game.storeName ?? 'Store' }}
+      </span>
+      <LowestBadge v-if="game.isHistoricalLow" />
     </span>
 
     <div

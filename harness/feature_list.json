@@ -521,7 +521,7 @@
         "cd frontend && npm run type-check && npm run lint pass",
         "Check in the browser with a game at its lowest price and one above it"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "wish-01",
