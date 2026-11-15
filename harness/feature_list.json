@@ -381,7 +381,7 @@
         "cd frontend && npm run type-check && npm run lint pass",
         "Walk through every workflow in the browser (stop Flask to test the error case)"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "home-01",
