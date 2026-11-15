@@ -353,7 +353,7 @@
         "cd frontend && npm run type-check && npm run lint pass",
         "Run Flask + npm run dev and walk through every workflow above in the browser, including phone width"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "search-04",

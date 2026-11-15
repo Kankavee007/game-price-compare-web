@@ -35,6 +35,51 @@ export interface GameDetail {
   deals: Deal[] // cheapest first
 }
 
+// Response shape of GET /api/deals (see backend/game_api/services/deals.py)
+export interface DealResult extends Game {
+  retailPrice: number
+  savings: number // percent, 0-100
+  steamRating: number | null // percent, null when the game has no Steam reviews
+  metacriticScore: number | null
+  releaseDate: string | null // YYYY-MM-DD
+}
+
+export interface DealPage {
+  results: DealResult[] // one per game, its cheapest store
+  page: number
+  totalPages: number
+  currency: Currency
+}
+
+// Response shape of GET /api/stores (active stores only, sorted by name)
+export interface Store {
+  storeID: string
+  storeName: string
+  logo: string | null
+}
+
+export const SORT_OPTIONS = [
+  { key: 'relevance', label: 'Best match' }, // only with a search text
+  { key: 'deal', label: 'Best deals' },
+  { key: 'price', label: 'Price: low to high' },
+  { key: 'savings', label: 'Biggest discount' },
+  { key: 'reviews', label: 'Steam reviews' },
+  { key: 'rating', label: 'Metacritic score' },
+  { key: 'newest', label: 'Newest releases' },
+] as const
+
+export type SortKey = (typeof SORT_OPTIONS)[number]['key']
+
+/** Filters of the search page; null / empty means "not set". Prices are in the chosen currency. */
+export interface DealFilters {
+  minPrice: number | null
+  maxPrice: number | null
+  sort: SortKey | null // null: the API default (relevance with a search text, else best deals)
+  stores: string[] // storeIDs
+  onSale: boolean
+  minRating: number | null // Steam rating percent
+}
+
 export const CURRENCIES = [
   { code: 'USD', label: 'USD 💵' },
   { code: 'THB', label: 'THB 🇹🇭' },

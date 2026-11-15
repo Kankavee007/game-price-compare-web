@@ -14,12 +14,15 @@ frontend/
     app.vue               # root: <NuxtLayout> + <NuxtPage>, title template
     layouts/default.vue   # header + nav shared by every page
     pages/                # file = route (index.vue -> /, about.vue -> /about, games/[id].vue -> /games/<id>)
-    components/           # GameCard, CurrencySelect (auto-imported)
+    components/           # GameCard, CurrencySelect, SearchFilters (auto-imported)
     utils/                # auto-imported
       apiGet.ts           #   fetch /api/* with abort + 30 s timeout, ApiError(status)
       searchGames.ts      #   GET /api/search
+      listDeals.ts        #   GET /api/deals (search page results with filters)
+      getStores.ts        #   GET /api/stores
+      dealFilters.ts      #   search filters <-> URL query (?min=&max=&sort=&stores=&sale=&rating=)
       getGameDetail.ts    #   GET /api/games/<id>
-    types.ts              # Game, GameDetail, CURRENCIES (match the API responses)
+    types.ts              # Game, GameDetail, DealResult, Store, DealFilters, CURRENCIES (match the API responses)
     error.vue             # 404 / error page
 
 backend/
