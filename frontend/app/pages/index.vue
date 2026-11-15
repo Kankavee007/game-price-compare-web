@@ -241,6 +241,8 @@ useHead({ title: () => query.value.trim() })
         </p>
 
         <div v-if="showLanding">
+          <WishlistSaleNotice :currency="currency" />
+          <RecentlyViewed :currency="currency" />
           <GameSection
             :limit="8"
             title="Top rated deals"

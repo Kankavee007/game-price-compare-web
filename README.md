@@ -5,7 +5,7 @@ My first web project by myself
 ค้นหาราคาเกมที่ถูกที่สุดจาก [CheapShark](https://www.cheapshark.com/) และแปลงสกุลเงินด้วย [open.er-api.com](https://open.er-api.com/) หน้ารายละเอียดเกมแสดงข้อมูลเกม (ประเภท คะแนน ปก) จาก [IGDB](https://www.igdb.com/) และราคาทุกร้านเรียงจากถูกไปแพง
 
 - `frontend/`: Nuxt 4 (Vue 3) + Tailwind CSS, prerendered to static HTML
-- `backend/`: Flask (`/api/search`, `/api/deals`, `/api/stores`, `/api/games/<id>`, `/api/health`)
+- `backend/`: Flask (`/api/search`, `/api/deals`, `/api/stores`, `/api/prices`, `/api/games/<id>`, `/api/health`)
 
 ```
 frontend/
@@ -13,13 +13,15 @@ frontend/
   app/
     app.vue               # root: <NuxtLayout> + <NuxtPage>, title template
     layouts/default.vue   # header + nav shared by every page
-    pages/                # file = route (index.vue -> /, about.vue -> /about, games/[id].vue -> /games/<id>)
-    components/           # GameCard, CurrencySelect, SearchFilters, GameSection, DiscountSidebar, LowestBadge (auto-imported)
+    pages/                # file = route (index.vue -> /, about.vue -> /about, wishlist.vue -> /wishlist, games/[id].vue -> /games/<id>)
+    components/           # GameCard, CurrencySelect, SearchFilters, GameSection, DiscountSidebar, LowestBadge, WishlistHeart, WishlistSaleNotice, RecentlyViewed (auto-imported)
+    composables/          # useWishlist, useRecentlyViewed (localStorage, synced across tabs), storedList helper
     utils/                # auto-imported
       apiGet.ts           #   fetch /api/* with abort + 30 s timeout, ApiError(status)
       searchGames.ts      #   GET /api/search
       listDeals.ts        #   GET /api/deals (search page results with filters)
       getStores.ts        #   GET /api/stores
+      getPrices.ts        #   GET /api/prices (wishlist prices)
       dealFilters.ts      #   search filters <-> URL query (?min=&max=&sort=&stores=&sale=&rating=)
       getGameDetail.ts    #   GET /api/games/<id>
     types.ts              # Game, GameDetail, DealResult, Store, DealFilters, CURRENCIES (match the API responses)
@@ -36,6 +38,7 @@ backend/
       search.py           #   GET /api/search
       deals.py            #   GET /api/deals?q=&currency=&minPrice=&maxPrice=&sort=&page=&stores=&onSale=&minRating=
       stores.py           #   GET /api/stores (active stores with logo)
+      prices.py           #   GET /api/prices?ids=1,2&currency= (cheapest deal of up to 50 games, for the wishlist)
       games.py            #   GET /api/games/<id>
       health.py           #   GET /api/health
     services/             # business logic + external APIs, no Flask imports
@@ -43,6 +46,7 @@ backend/
       deals.py            #   find_deals(): filters, sort, paging, one row per game (cheapest store)
       lowest.py           #   lowest_price_fields(): lowest price ever + isHistoricalLow (compared in USD)
       stores.py           #   list_active_stores(): for the store filter, sorted by name
+      prices.py           #   get_prices(): cheapest deal per game for many ids
       game_detail.py      #   get_game_detail(): CheapShark deals + IGDB info, sorted cheapest first
       cheapshark.py       #   CheapShark API (search, one game, many games, /deals cached 15 min, store list cached 1 day)
       igdb.py             #   IGDB API (Twitch app token cached in memory, match by Steam id then title)

@@ -3,6 +3,7 @@ import pytest
 from game_api import config, create_app
 from game_api.errors import InvalidCurrencyError, InvalidParamError, UpstreamError
 from game_api.routes import deals as deals_route
+from game_api.routes import prices as prices_route
 from game_api.routes import search as search_route
 from game_api.routes import stores as stores_route
 
@@ -153,3 +154,39 @@ def test_errors_are_not_cacheable(client, monkeypatch, url, route_module, name):
 
     assert res.status_code == 502
     assert "s-maxage" not in res.headers.get("Cache-Control", "")
+
+
+def test_prices_passes_ids_and_currency(client, monkeypatch):
+    calls = []
+
+    def fake(ids, currency):
+        calls.append((ids, currency))
+        return [{"gameID": "82"}]
+
+    monkeypatch.setattr(prices_route, "get_prices", fake)
+    res = client.get("/api/prices?ids=82,99&currency=thb")
+
+    assert res.status_code == 200
+    assert res.get_json() == [{"gameID": "82"}]
+    assert calls == [("82,99", "THB")]
+
+
+@pytest.mark.parametrize(
+    "error, status",
+    [(InvalidParamError("ids is required"), 400), (InvalidCurrencyError("X"), 400), (UpstreamError("down"), 502)],
+)
+def test_prices_maps_errors(client, monkeypatch, error, status):
+    def fail(ids, currency):
+        raise error
+
+    monkeypatch.setattr(prices_route, "get_prices", fail)
+    res = client.get("/api/prices?ids=1")
+
+    assert res.status_code == status
+    assert "error" in res.get_json()
+
+
+def test_prices_without_ids_end_to_end(client):
+    res = client.get("/api/prices")
+    assert res.status_code == 400
+    assert "ids" in res.get_json()["error"]
