@@ -14,3 +14,6 @@ REQUEST_TIMEOUT = 10  # วินาที ต่อ request ที่ยิง�
 RATE_CACHE_SECONDS = 60 * 30  # 30 นาที
 STORE_CACHE_SECONDS = 60 * 60 * 24  # 1 วัน
 SEARCH_LIMIT = 25  # CheapShark ให้ค้นราคาหลายเกมพร้อมกันได้สูงสุด 25 id ต่อครั้ง
+DEALS_PAGE_SIZE = 30  # results per /api/deals page (CheapShark allows up to 60)
+DEALS_CACHE_SECONDS = 60 * 15  # 15 นาที: landing page lists are the same for every visitor
+DEALS_CACHE_MAX_ENTRIES = 200  # drop the oldest entry above this, so memory stays bounded

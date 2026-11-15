@@ -1,8 +1,10 @@
 import pytest
 
 from game_api import config, create_app
-from game_api.errors import InvalidCurrencyError, UpstreamError
+from game_api.errors import InvalidCurrencyError, InvalidParamError, UpstreamError
+from game_api.routes import deals as deals_route
 from game_api.routes import search as search_route
+from game_api.routes import stores as stores_route
 
 
 @pytest.fixture
@@ -57,3 +59,65 @@ def test_health(client, monkeypatch, client_id, secret, igdb):
 
     assert body == {"status": "ok", "igdb": igdb}
     assert "secret" not in str(body)  # never leaks the values
+
+
+def test_deals_passes_query_currency_and_args(client, monkeypatch):
+    calls = []
+
+    def fake(query, currency, args):
+        calls.append((query, currency, args.get("maxPrice")))
+        return {"results": [], "page": 0, "totalPages": 1, "currency": currency}
+
+    monkeypatch.setattr(deals_route, "find_deals", fake)
+    res = client.get("/api/deals?q=%20portal%20&currency=thb&maxPrice=300")
+
+    assert res.status_code == 200
+    assert res.get_json()["currency"] == "THB"
+    assert calls == [("portal", "THB", "300")]
+
+
+@pytest.mark.parametrize(
+    "error, status, message",
+    [
+        (InvalidParamError("sort must be one of: x"), 400, "sort must be one of: x"),
+        (InvalidCurrencyError("XYZ"), 400, "unsupported currency: USD"),
+        (UpstreamError("down"), 502, "price service unavailable, try again later"),
+    ],
+)
+def test_deals_maps_errors(client, monkeypatch, error, status, message):
+    def fail(query, currency, args):
+        raise error
+
+    monkeypatch.setattr(deals_route, "find_deals", fail)
+    res = client.get("/api/deals")
+
+    assert res.status_code == status
+    assert res.get_json() == {"error": message}
+
+
+def test_deals_bad_param_end_to_end(client):
+    # Validation happens before any API call, so this needs no mocks
+    res = client.get("/api/deals?minPrice=abc")
+
+    assert res.status_code == 400
+    assert "minPrice" in res.get_json()["error"]
+
+
+def test_stores_returns_service_result(client, monkeypatch):
+    stores = [{"storeID": "1", "storeName": "Steam", "logo": None}]
+    monkeypatch.setattr(stores_route, "list_active_stores", lambda: stores)
+    res = client.get("/api/stores")
+
+    assert res.status_code == 200
+    assert res.get_json() == stores
+
+
+def test_stores_upstream_error_is_502(client, monkeypatch):
+    def fail():
+        raise UpstreamError("down")
+
+    monkeypatch.setattr(stores_route, "list_active_stores", fail)
+    res = client.get("/api/stores")
+
+    assert res.status_code == 502
+    assert res.get_json() == {"error": "store list unavailable, try again later"}

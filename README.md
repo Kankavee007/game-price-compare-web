@@ -5,7 +5,7 @@ My first web project by myself
 ค้นหาราคาเกมที่ถูกที่สุดจาก [CheapShark](https://www.cheapshark.com/) และแปลงสกุลเงินด้วย [open.er-api.com](https://open.er-api.com/) หน้ารายละเอียดเกมแสดงข้อมูลเกม (ประเภท คะแนน ปก) จาก [IGDB](https://www.igdb.com/) และราคาทุกร้านเรียงจากถูกไปแพง
 
 - `frontend/`: Nuxt 4 (Vue 3) + Tailwind CSS, prerendered to static HTML
-- `backend/`: Flask (`/api/search`, `/api/games/<id>`, `/api/health`)
+- `backend/`: Flask (`/api/search`, `/api/deals`, `/api/stores`, `/api/games/<id>`, `/api/health`)
 
 ```
 frontend/
@@ -14,12 +14,15 @@ frontend/
     app.vue               # root: <NuxtLayout> + <NuxtPage>, title template
     layouts/default.vue   # header + nav shared by every page
     pages/                # file = route (index.vue -> /, about.vue -> /about, games/[id].vue -> /games/<id>)
-    components/           # GameCard, CurrencySelect (auto-imported)
+    components/           # GameCard, CurrencySelect, SearchFilters (auto-imported)
     utils/                # auto-imported
       apiGet.ts           #   fetch /api/* with abort + 30 s timeout, ApiError(status)
       searchGames.ts      #   GET /api/search
+      listDeals.ts        #   GET /api/deals (search page results with filters)
+      getStores.ts        #   GET /api/stores
+      dealFilters.ts      #   search filters <-> URL query (?min=&max=&sort=&stores=&sale=&rating=)
       getGameDetail.ts    #   GET /api/games/<id>
-    types.ts              # Game, GameDetail, CURRENCIES (match the API responses)
+    types.ts              # Game, GameDetail, DealResult, Store, DealFilters, CURRENCIES (match the API responses)
     error.vue             # 404 / error page
 
 backend/
@@ -27,16 +30,20 @@ backend/
   game_api/
     __init__.py           # create_app()
     config.py             # URLs, timeouts, cache durations, env vars
-    errors.py             # UpstreamError (+ UpstreamNotFoundError), ConfigError, InvalidCurrencyError
+    errors.py             # UpstreamError (+ UpstreamNotFoundError), ConfigError, InvalidCurrencyError, InvalidParamError
     http.py               # shared GET/POST with timeout + User-Agent
     routes/               # HTTP layer only: read params, call a service, map errors to status codes
       search.py           #   GET /api/search
+      deals.py            #   GET /api/deals?q=&currency=&minPrice=&maxPrice=&sort=&page=&stores=&onSale=&minRating=
+      stores.py           #   GET /api/stores (active stores with logo)
       games.py            #   GET /api/games/<id>
       health.py           #   GET /api/health
     services/             # business logic + external APIs, no Flask imports
       search.py           #   search_prices(): combine games, stores, exchange rate
+      deals.py            #   find_deals(): filters, sort, paging, one row per game (cheapest store)
+      stores.py           #   list_active_stores(): for the store filter, sorted by name
       game_detail.py      #   get_game_detail(): CheapShark deals + IGDB info, sorted cheapest first
-      cheapshark.py       #   CheapShark API (search, one game, deal stores, store names cached 1 day)
+      cheapshark.py       #   CheapShark API (search, one game, many games, /deals cached 15 min, store list cached 1 day)
       igdb.py             #   IGDB API (Twitch app token cached in memory, match by Steam id then title)
       exchange.py         #   USD exchange rates (cached 30 min, stale on error)
   tests/                  # one file per layer, external APIs mocked

@@ -6,7 +6,13 @@
     "Phase 2 (optional) turns on SSR/hybrid for some pages. Server-side fetches cannot use relative /api, so they need a Vercel service binding URL.",
     "Only set passes to true after running every step in that feature and seeing it work.",
     "Backend tests: cd backend && pytest. They must stay green for every feature.",
-    "Phase 3 adds a game detail page at /games/[id]. Game info (name, genres, rating, cover, summary) comes from the IGDB API; every store price comes from CheapShark. id is the CheapShark gameID. Flask calls both APIs, so IGDB credentials never reach the browser."
+    "Phase 3 adds a game detail page at /games/[id]. Game info (name, genres, rating, cover, summary) comes from the IGDB API; every store price comes from CheapShark. id is the CheapShark gameID. Flask calls both APIs, so IGDB credentials never reach the browser.",
+    "Phases 4-9 make the search page more engaging: filters and sorting (4), a landing page with top titles and a biggest-discount sidebar (5), historical-low badges (6), wishlist and recently viewed (7), email price alerts (8), discovery: header quick search, similar games, browse by genre (9).",
+    "Filters and sorting use CheapShark GET /deals (title, lowerPrice, upperPrice, storeID, onSale, metacritic, steamRating, sortBy, desc, pageNumber, pageSize<=60; total pages in the X-Total-Page-Count response header). /deals returns one row per store, so the backend keeps only the cheapest row per gameID. Its title filter is a substring match ('portal' also returns 'SPORTAL'), so a text search with the default 'Relevance' sort keeps the current /games?title search and applies the filters to those results.",
+    "CheapShark prices are USD. Price filters typed in THB/EUR are converted to USD before calling CheapShark, then results are checked again after conversion so every shown price is inside the range the user typed.",
+    "Landing page lists (top rated, new, free, biggest discounts) are the same for every visitor: cache raw CheapShark /deals responses in memory for 15 min and send Cache-Control so the Vercel CDN can cache /api responses. In-memory cache is per serverless instance, so it only reduces load, it is not shared.",
+    "Wishlist and recently viewed are stored in the browser (localStorage), no accounts. Pages /wishlist and /browse use query strings (/browse?genre=12), not dynamic paths, so they can be prerendered like /about and need no vercel.json change.",
+    "Price alerts use CheapShark GET /alerts?action=set&email=&gameID=&price= (price in USD). CheapShark sends the emails, so the user's email address leaves our server; the form must say so. The browser POSTs to Flask so the email is not in our URLs or access logs."
   ],
   "features": [
     {
@@ -252,6 +258,561 @@
         "Update README (IGDB env vars, new endpoint) and the about page (IGDB as a data source)"
       ],
       "passes": true
+    },
+    {
+      "id": "search-01",
+      "phase": 4,
+      "category": "functional",
+      "description": "Backend: GET /api/deals with filters, sorting and paging",
+      "workflows": {
+        "main": [
+          "Frontend calls /api/deals?q=portal&currency=THB&minPrice=100&maxPrice=500&sort=newest&page=0",
+          "Response is { results[], page, totalPages, currency }; each result has the /api/search fields plus retailPrice, savings, steamRating, metacriticScore, releaseDate; one result per game, the cheapest store"
+        ],
+        "alternate": [
+          "No q: returns deals for all games matching the filters (e.g. every game under 5 USD, newest first)",
+          "q with sort=relevance (the default when q is set): uses the current /games?title search and applies the filters to its results; totalPages is 1",
+          "Only one of minPrice/maxPrice given: the other side is open",
+          "maxPrice=0: only games that are free right now",
+          "Same request again within 15 min: served from the in-memory cache, no CheapShark call"
+        ],
+        "error": [
+          "minPrice > maxPrice, negative price, unknown sort, page < 0, non-numeric value: 400 JSON with a message naming the bad parameter",
+          "Unknown currency: same 400 as /api/search",
+          "CheapShark down or timeout: same 502 JSON as /api/search, never a 500 traceback"
+        ]
+      },
+      "steps": [
+        "Add cheapshark.list_deals(params) that calls GET /deals and returns (rows, totalPages); http.py needs a way to read the X-Total-Page-Count header (default totalPages 1 when it is missing)",
+        "Cache list_deals results in memory for 15 min keyed by the sorted USD params; cap the cache (e.g. 200 entries, drop the oldest)",
+        "Add services/deals.py: validate params, map sort (relevance, deal, price, savings, rating, reviews, newest) to CheapShark sortBy, convert minPrice/maxPrice to USD, pageSize 30",
+        "Keep only the cheapest row per gameID; convert prices with the exchange rate; drop rows outside the requested range after conversion",
+        "sort=relevance with q: reuse search_prices and filter its results locally (price range, stores, onSale)",
+        "Optional filters: stores=1,7 (storeID list), onSale=1, minRating=80 (Steam rating percent)",
+        "Add route routes/deals.py mapping errors to 400/502 like search.py",
+        "Add tests with CheapShark mocked: each sort mapping, currency conversion of the price bounds, dedupe per gameID, range check after conversion, relevance path, cache hit, every 400 case, 502",
+        "cd backend && pytest stays green",
+        "Update README endpoint list"
+      ],
+      "passes": true
+    },
+    {
+      "id": "search-02",
+      "phase": 4,
+      "category": "functional",
+      "description": "Backend: GET /api/stores returns active stores with names and logos",
+      "workflows": {
+        "main": [
+          "Frontend calls /api/stores and gets [{ storeID, storeName, logo }] for active stores only, sorted by name"
+        ],
+        "alternate": [
+          "Called again within 1 day: served from the store cache (shared with get_store_names)"
+        ],
+        "error": [
+          "CheapShark /stores down and no cache yet: 502 JSON; the frontend hides the store filter instead of breaking the page"
+        ]
+      },
+      "steps": [
+        "Extend the store cache in cheapshark.py to keep isActive and the logo URL (https://www.cheapshark.com + images.logo)",
+        "Add the route and tests (active filter, logo URL, cache, 502)",
+        "cd backend && pytest stays green"
+      ],
+      "passes": true
+    },
+    {
+      "id": "search-03",
+      "phase": 4,
+      "category": "functional",
+      "description": "Search page filter bar: price range, sort, stores, on sale only, minimum rating, all kept in the URL",
+      "workflows": {
+        "main": [
+          "User types 'portal', opens the filter bar, sets max price 300 THB and sort 'Newest'",
+          "Results update after the debounce; URL becomes /?q=portal&currency=THB&max=300&sort=newest",
+          "User opens a game and presses Back: same query, filters and results are restored"
+        ],
+        "alternate": [
+          "User picks store chips (Steam, GOG): only deals from those stores show",
+          "User ticks 'On sale only' or sets minimum rating 80%",
+          "User clears all filters with 'Reset': URL goes back to /?q=portal",
+          "User opens a shared link with filters: the page loads with those filters applied",
+          "User changes currency while a price range is set: the range stays in the URL and is read in the new currency",
+          "No q but a filter set: results grid shows all matching deals instead of the landing sections"
+        ],
+        "error": [
+          "Min price higher than max: inline message under the inputs, no request sent",
+          "Bad values in a shared URL (max=abc, sort=foo): ignored and treated as unset, page still loads",
+          "/api/stores fails: store chips are hidden, other filters still work",
+          "/api/deals fails or times out: same error message as the search today, filters stay as they were"
+        ]
+      },
+      "steps": [
+        "Add a Deal-list result type to types.ts matching /api/deals; add utils/listDeals.ts and utils/getStores.ts using apiGet",
+        "Add components/SearchFilters.vue (collapsible on phone width) and wire it in pages/index.vue",
+        "Read and write every filter in the route query with router.replace (no history entry per change), parse invalid values as unset",
+        "Show the active filter count on the toggle button",
+        "cd frontend && npm run type-check && npm run lint pass",
+        "Run Flask + npm run dev and walk through every workflow above in the browser, including phone width"
+      ],
+      "passes": true
+    },
+    {
+      "id": "search-04",
+      "phase": 4,
+      "category": "functional",
+      "description": "'Load more' button for deal results",
+      "workflows": {
+        "main": [
+          "User browses deals under 5 USD; 30 results show with a 'Load more' button below",
+          "Click 'Load more': the next page is appended below, scroll position stays"
+        ],
+        "alternate": [
+          "Last page reached: button is hidden",
+          "Relevance text search (one page only): no button",
+          "A game already shown appears again on the next page: it is not shown twice",
+          "User changes a filter: list resets to page 0"
+        ],
+        "error": [
+          "Next page fails: already-loaded results stay, button shows 'Failed to load, try again' and retries on click"
+        ]
+      },
+      "steps": [
+        "Keep page and totalPages in state; append results and dedupe by gameID",
+        "Abort a pending 'load more' when filters change",
+        "cd frontend && npm run type-check && npm run lint pass",
+        "Walk through every workflow in the browser (stop Flask to test the error case)"
+      ],
+      "passes": true
+    },
+    {
+      "id": "search-05",
+      "phase": 4,
+      "category": "functional",
+      "description": "Loaded 'Load more' pages are kept in the URL, so Back from a game page restores all of them",
+      "workflows": {
+        "main": [
+          "User browses deals under 5 USD and clicks 'Load more' twice; URL becomes /?max=5&page=2",
+          "User opens a game from the third page and presses Back",
+          "All three pages are shown again (no duplicates) and the page scrolls back to where the user was"
+        ],
+        "alternate": [
+          "Shared link with page=2: the first three pages load",
+          "page is higher than the last page: everything up to the last page loads, 'Load more' is hidden",
+          "User changes the search or a filter: page is removed from the URL and the list starts again at page 0",
+          "Relevance text search (one page only): page is ignored"
+        ],
+        "error": [
+          "Bad page value in the URL (page=abc, page=-1): treated as page 0",
+          "page above 20: capped at 20, so a link cannot make the page send hundreds of requests",
+          "One of the pages fails while restoring: the same error message as a failed search, with the filters kept"
+        ]
+      },
+      "steps": [
+        "Read page from the route query on mount; load pages 0..page in parallel and combine them without duplicates",
+        "Write page to the URL with router.replace after each successful 'Load more'; leave it out when it is 0",
+        "Restore the scroll position after the restored pages render when coming back through history",
+        "cd frontend && npm run type-check && npm run lint pass",
+        "Walk through every workflow in the browser"
+      ],
+      "passes": true
+    },
+    {
+      "id": "home-01",
+      "phase": 5,
+      "category": "functional",
+      "description": "Landing page: top rated, new releases and 'Free right now' sections when there is no search",
+      "workflows": {
+        "main": [
+          "User opens / with no query",
+          "Page shows 'Top rated deals', 'New releases' and 'Free right now' sections with game cards in the chosen currency instead of an empty page",
+          "Clicking a card opens its detail page; each section has 'See all' that applies the matching sort/filter in the search page"
+        ],
+        "alternate": [
+          "User starts typing: sections are replaced by search results; clearing the box brings them back",
+          "'Free right now' has no games: that section is hidden",
+          "User changes currency: section prices update"
+        ],
+        "error": [
+          "One section fails to load: that section shows 'Could not load, try again' with a retry button; other sections still show",
+          "All fail (Flask down): each section shows its error, the search box still works when the API comes back"
+        ]
+      },
+      "steps": [
+        "Pick /api/deals params for 'Top rated' that give well-known games (e.g. sort=rating with a minimum Steam rating count), check them against live data and note the choice in a code comment",
+        "New releases: sort=newest, onSale not required; Free right now: maxPrice=0 and onSale=1 (paid games that are free to keep)",
+        "Add components/GameSection.vue (title, horizontal scroll row on phone, grid on desktop, loading skeleton, error + retry)",
+        "Add Cache-Control: public, s-maxage=900, stale-while-revalidate=300 to /api/deals and /api/stores responses; add a backend test for the header",
+        "cd backend && pytest; cd frontend && npm run type-check && npm run lint pass",
+        "Walk through every workflow in the browser",
+        "Check on a Vercel preview that repeat /api/deals requests are served from the CDN cache (x-vercel-cache: HIT); leave passes false until checked"
+      ],
+      "passes": false
+    },
+    {
+      "id": "home-02",
+      "phase": 5,
+      "category": "functional",
+      "description": "Sidebar with the biggest discounts on good games",
+      "workflows": {
+        "main": [
+          "On / at desktop width, a sidebar on the right lists 10 deals with the biggest discount: thumbnail, name, -85% badge, sale price, original price struck through",
+          "Clicking an item opens its detail page"
+        ],
+        "alternate": [
+          "Phone or tablet width: the list moves below the main content, no horizontal page scroll",
+          "Sidebar stays visible while the user searches"
+        ],
+        "error": [
+          "Request fails: sidebar shows 'Deals unavailable' with a retry button; the rest of the page works"
+        ]
+      },
+      "steps": [
+        "Use /api/deals with sort=savings, onSale=1 and a minimum Steam rating (e.g. 80) so the list is not full of unknown 95%-off games",
+        "Add components/DiscountSidebar.vue with loading skeleton and error state",
+        "cd frontend && npm run type-check && npm run lint pass",
+        "Walk through every workflow in the browser at desktop and phone width"
+      ],
+      "passes": false
+    },
+    {
+      "id": "lowest-01",
+      "phase": 6,
+      "category": "functional",
+      "description": "Backend: add the lowest price ever to search, deals and detail responses",
+      "workflows": {
+        "main": [
+          "Each result in /api/search and /api/deals, and the /api/games/<id> response, has lowestPriceEver (converted), lowestPriceEverDate (YYYY-MM-DD) and isHistoricalLow"
+        ],
+        "alternate": [
+          "CheapShark has no cheapestPriceEver for a game: the three fields are null/false",
+          "More than 25 games in one response: the ids lookup is split into chunks of 25"
+        ],
+        "error": [
+          "The ids lookup fails for /api/deals: results still return with null lowest-ever fields (it is extra info), and the error is logged"
+        ]
+      },
+      "steps": [
+        "Search already calls /games?ids (get_deal_stores): return cheapestPriceEver from the same call, no extra request",
+        "Deals: one /games?ids call per 25 games; detail: use cheapestPriceEver from get_game",
+        "isHistoricalLow compares USD prices (current <= lowest ever) before conversion, so rounding cannot flip it",
+        "Update types.ts and add tests (chunking, null data, failure fallback, compare in USD)",
+        "cd backend && pytest stays green"
+      ],
+      "passes": false
+    },
+    {
+      "id": "lowest-02",
+      "phase": 6,
+      "category": "functional",
+      "description": "Frontend: 'Lowest price ever' badges on cards and price history line on the detail page",
+      "workflows": {
+        "main": [
+          "A card whose current price equals the lowest ever shows a 'Lowest ever' badge",
+          "The detail page shows 'Lowest ever: 99 THB on 2025-06-30' and either a 'Lowest ever' badge or '12% above the lowest price'"
+        ],
+        "alternate": [
+          "No lowest-ever data: no badge and no line, layout does not jump"
+        ],
+        "error": [
+          "Detail page API fails: the existing error state shows (nothing new)"
+        ]
+      },
+      "steps": [
+        "Add the badge to GameCard and DiscountSidebar items and the line to pages/games/[id].vue",
+        "cd frontend && npm run type-check && npm run lint pass",
+        "Check in the browser with a game at its lowest price and one above it"
+      ],
+      "passes": false
+    },
+    {
+      "id": "wish-01",
+      "phase": 7,
+      "category": "functional",
+      "description": "Backend: GET /api/prices?ids=1,2,3&currency=XXX returns the current cheapest price of many games",
+      "workflows": {
+        "main": [
+          "Frontend sends up to 50 CheapShark game ids; response is [{ gameID, name, thumb, price, retailPrice, savings, storeName, dealUrl, lowestPriceEver, isHistoricalLow }]"
+        ],
+        "alternate": [
+          "An id CheapShark no longer knows: left out of the response",
+          "More than 25 ids: split into CheapShark calls of 25"
+        ],
+        "error": [
+          "No ids, more than 50, or an id that is not digits: 400 JSON",
+          "Unknown currency: 400; CheapShark down: 502 JSON"
+        ]
+      },
+      "steps": [
+        "Add services/prices.py on top of /games?ids; cheapest deal per game with store name and converted prices",
+        "Add route and tests with CheapShark mocked",
+        "cd backend && pytest stays green; update README endpoint list"
+      ],
+      "passes": false
+    },
+    {
+      "id": "wish-02",
+      "phase": 7,
+      "category": "functional",
+      "description": "Add or remove a game from the wishlist on the detail page and on cards",
+      "workflows": {
+        "main": [
+          "User opens /games/<id> and clicks 'Add to wishlist'",
+          "Button changes to 'In wishlist'; the header 'Wishlist' link shows the count"
+        ],
+        "alternate": [
+          "Game already in the wishlist: button shows 'Remove from wishlist' and removes it on click",
+          "Heart icon on a game card toggles the same wishlist without opening the page",
+          "Wishlist changed in another tab: count updates (storage event)"
+        ],
+        "error": [
+          "localStorage unavailable or full (private mode): a short message says the wishlist cannot be saved on this browser; the page does not crash",
+          "Stored data is broken JSON: treated as an empty wishlist"
+        ]
+      },
+      "steps": [
+        "Add composables/useWishlist.ts: list of { gameID, name, thumb, addedAt } in localStorage, every read/write in try/catch, max 50 games",
+        "Add the button on the detail page, the heart on GameCard (click must not open the link), and the header link with count",
+        "cd frontend && npm run type-check && npm run lint pass",
+        "Walk through every workflow in the browser, including a private window"
+      ],
+      "passes": false
+    },
+    {
+      "id": "wish-03",
+      "phase": 7,
+      "category": "functional",
+      "description": "/wishlist page lists saved games with their current cheapest price",
+      "workflows": {
+        "main": [
+          "User opens /wishlist and sees every saved game with its current cheapest price, store, discount and 'Lowest ever' badge, on-sale games first",
+          "Clicking a game opens its detail page; 'Remove' removes it"
+        ],
+        "alternate": [
+          "Wishlist is empty: empty state with a link to search",
+          "A saved game is no longer on CheapShark: row shows 'No longer listed' with a remove button",
+          "User changes currency: prices update"
+        ],
+        "error": [
+          "Price API fails or times out: games still listed from local data, price shows 'unavailable' with a retry button"
+        ]
+      },
+      "steps": [
+        "Create pages/wishlist.vue (client-only data, prerendered shell) and add '/wishlist': { prerender: true } to routeRules",
+        "Run npm run generate, serve .output/public and open /wishlist directly to confirm it loads without a vercel.json change",
+        "cd frontend && npm run type-check && npm run lint pass",
+        "Walk through every workflow in the browser"
+      ],
+      "passes": false
+    },
+    {
+      "id": "wish-04",
+      "phase": 7,
+      "category": "functional",
+      "description": "Landing page notice when wishlist games are on sale",
+      "workflows": {
+        "main": [
+          "User has 5 games in the wishlist, 2 are on sale; the landing page shows 'Your wishlist: 2 games on sale' linking to /wishlist"
+        ],
+        "alternate": [
+          "Empty wishlist or nothing on sale: no notice"
+        ],
+        "error": [
+          "Price API fails: no notice, rest of the landing page unaffected"
+        ]
+      },
+      "steps": [
+        "Call /api/prices with the wishlist ids on the landing page, count savings > 0",
+        "cd frontend && npm run type-check && npm run lint pass",
+        "Check in the browser with and without sales in the wishlist"
+      ],
+      "passes": false
+    },
+    {
+      "id": "wish-05",
+      "phase": 7,
+      "category": "functional",
+      "description": "'Recently viewed' row on the landing page",
+      "workflows": {
+        "main": [
+          "User opens three detail pages, then goes to /",
+          "Landing page shows 'Recently viewed' with those three games, newest first; clicking one opens it"
+        ],
+        "alternate": [
+          "Same game opened twice: listed once, moved to the front",
+          "More than 10 games: oldest dropped",
+          "'Clear' button empties the row; row hidden when empty"
+        ],
+        "error": [
+          "localStorage unavailable: row is hidden, nothing crashes"
+        ]
+      },
+      "steps": [
+        "Add composables/useRecentlyViewed.ts (gameID, name, thumb; max 10; try/catch storage); save on detail page load after data arrives",
+        "Show it on the landing page using the GameSection component (no price, so no API call)",
+        "cd frontend && npm run type-check && npm run lint pass",
+        "Walk through every workflow in the browser"
+      ],
+      "passes": false
+    },
+    {
+      "id": "alert-01",
+      "phase": 8,
+      "category": "functional",
+      "description": "Backend: POST /api/alerts sets a CheapShark email price alert",
+      "workflows": {
+        "main": [
+          "Frontend POSTs { email, gameID, price, currency }; Flask converts price to USD and calls CheapShark /alerts?action=set; returns { ok: true }"
+        ],
+        "alternate": [
+          "Same email and game again: CheapShark updates the alert price; still { ok: true }"
+        ],
+        "error": [
+          "Invalid email, missing gameID, price <= 0, unknown currency: 400 JSON naming the field",
+          "Too many alerts from one IP (e.g. more than 5 per hour): 429 JSON 'Too many alerts, try later' (best effort, in memory)",
+          "CheapShark answers false or is down: 502 JSON 'Could not create alert, try again later'",
+          "The email never appears in logs; log lines use the gameID only"
+        ]
+      },
+      "steps": [
+        "Add cheapshark.set_alert(email, game_id, price_usd), services/alerts.py (validation, conversion, rate limit) and routes/alerts.py",
+        "Add tests with CheapShark mocked: conversion, each 400, 429, 502, and that the email is not logged",
+        "cd backend && pytest stays green; update README endpoint list"
+      ],
+      "passes": false
+    },
+    {
+      "id": "alert-02",
+      "phase": 8,
+      "category": "functional",
+      "description": "Price alert form on the detail page",
+      "workflows": {
+        "main": [
+          "User clicks 'Alert me when cheaper', enters email and target price (prefilled a bit under the current price), submits",
+          "Form shows 'Alert set. CheapShark will email you when the price drops below 250 THB.'"
+        ],
+        "alternate": [
+          "Target price above the current price: warning that the alert may fire right away, submit still allowed"
+        ],
+        "error": [
+          "Invalid email or empty price: inline field error, no request sent",
+          "429 or 502: message from the API shown under the form, input kept so the user can retry"
+        ]
+      },
+      "steps": [
+        "Add components/PriceAlertForm.vue with a note that the email is sent to CheapShark, which sends and manages the alerts",
+        "Add an apiPost helper next to apiGet (same timeout and error handling)",
+        "Mention price alerts and the email sharing on the about page",
+        "cd frontend && npm run type-check && npm run lint pass",
+        "Walk through every workflow in the browser; create one real alert with the owner's own email only after the owner says yes"
+      ],
+      "passes": false
+    },
+    {
+      "id": "discover-01",
+      "phase": 9,
+      "category": "functional",
+      "description": "Header quick search with suggestions on every page",
+      "workflows": {
+        "main": [
+          "On /about or a detail page, user types 'witcher' in the header search box",
+          "After a short debounce a dropdown shows up to 5 games with thumbnail and cheapest price; clicking one opens its detail page"
+        ],
+        "alternate": [
+          "Enter without picking: goes to /?q=witcher with the full results",
+          "Arrow keys move through suggestions, Enter opens the highlighted one, Escape closes the dropdown",
+          "On / the header box is hidden because the page has its own search box",
+          "No matches: dropdown says 'No games found'"
+        ],
+        "error": [
+          "API fails or times out: dropdown says 'Suggestions unavailable'; Enter still goes to the search page"
+        ]
+      },
+      "steps": [
+        "Add components/QuickSearch.vue using searchGames with abort of older requests, ARIA combobox roles",
+        "Put it in layouts/default.vue; collapse to an icon button at phone width",
+        "cd frontend && npm run type-check && npm run lint pass",
+        "Walk through every workflow in the browser, with keyboard only"
+      ],
+      "passes": false
+    },
+    {
+      "id": "discover-02",
+      "phase": 9,
+      "category": "functional",
+      "description": "'Similar games' on the detail page from IGDB",
+      "workflows": {
+        "main": [
+          "Detail page shows up to 6 similar games with cover and name; clicking one opens the search page with that name"
+        ],
+        "alternate": [
+          "IGDB has no similar games or no match for this game: section hidden"
+        ],
+        "error": [
+          "IGDB fails: section hidden, prices still show (same fallback as detail-02)"
+        ]
+      },
+      "steps": [
+        "Add similar_games.name and similar_games.cover.image_id to the IGDB fields; add similarGames [{ name, cover }] to /api/games/<id> and types.ts",
+        "Backend tests for the new field and the empty case; cd backend && pytest stays green",
+        "Show the section on pages/games/[id].vue linking to /?q=<name>",
+        "cd frontend && npm run type-check && npm run lint pass; check in the browser"
+      ],
+      "passes": false
+    },
+    {
+      "id": "discover-03",
+      "phase": 9,
+      "category": "functional",
+      "description": "Backend: GET /api/genres and GET /api/browse?genre=<id>&currency=XXX",
+      "workflows": {
+        "main": [
+          "/api/genres returns [{ id, name }] from IGDB (cached 1 day)",
+          "/api/browse?genre=12 returns up to 12 popular PC games in that genre: name, cover, rating, and gameID + cheapest price when CheapShark sells it"
+        ],
+        "alternate": [
+          "A game is not on CheapShark: returned with gameID and price null",
+          "Same genre within 6 hours: served from cache"
+        ],
+        "error": [
+          "Unknown or non-numeric genre: 400 JSON",
+          "IGDB down: 502 JSON; Twitch env vars missing: 500 JSON like other IGDB config errors",
+          "CheapShark lookup fails for some games: those games get price null, the rest still return"
+        ]
+      },
+      "steps": [
+        "IGDB query: genres = (id) & platforms = (6) & game_type = 0, sort total_rating_count desc, limit 12, with Steam external_games uid",
+        "Look up each Steam app id with CheapShark /games?steamAppID= (max 4 at a time), convert prices",
+        "Cache /api/browse per genre for 6 hours (one browse costs up to 13 upstream calls)",
+        "Tests with IGDB and CheapShark mocked; cd backend && pytest stays green; update README"
+      ],
+      "passes": false
+    },
+    {
+      "id": "discover-04",
+      "phase": 9,
+      "category": "functional",
+      "description": "/browse page: pick a genre and see its popular games with prices",
+      "workflows": {
+        "main": [
+          "User clicks 'Browse' in the header, picks 'Role-playing (RPG)'; URL becomes /browse?genre=12",
+          "Grid shows popular RPGs with cover, rating and cheapest price; clicking one with a price opens its detail page"
+        ],
+        "alternate": [
+          "Game without a CheapShark price: card shows 'Not sold in tracked stores' and links to the search page instead",
+          "Opening /browse with no genre: shows the genre list only",
+          "Clicking a genre tag on a detail page opens /browse with that genre"
+        ],
+        "error": [
+          "Bad genre in the URL: message 'Unknown genre' plus the genre list",
+          "API fails or times out: error message with a retry button, genre list still usable if it loaded"
+        ]
+      },
+      "steps": [
+        "Create pages/browse.vue and add '/browse': { prerender: true } to routeRules; add 'Browse' to the header nav",
+        "Run npm run generate, serve .output/public and open /browse?genre=12 directly",
+        "cd frontend && npm run type-check && npm run lint pass",
+        "Walk through every workflow in the browser; update the about page"
+      ],
+      "passes": false
     }
   ]
 }
