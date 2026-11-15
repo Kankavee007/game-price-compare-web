@@ -101,7 +101,7 @@ Locally, put them in `backend/.env` (git-ignored, copy from `.env.example`). Nev
 
 Pages are prerendered at build time, so they must not fetch data on the server. `/games/<id>` cannot be prerendered (the ids are dynamic): it is client-only (`routeRules` in `nuxt.config.ts`), and `vercel.json` serves the SPA shell `200.html` for it. Any other unknown path gets `404.html`. If a page ever needs server-side data from Flask, it needs a Vercel service binding for the API URL, because relative `/api` URLs only work in the browser.
 
-`/api/deals` and `/api/stores` answer the same for every visitor, so successful responses carry `Cache-Control: public, s-maxage=900, stale-while-revalidate=300` (`SHARED_CACHE_CONTROL` in `config.py`): the Vercel CDN keeps them 15 min, and browsers may show a copy up to 5 min old while they refresh it. Error responses are never cached. Check a deployment with the `x-vercel-cache` response header (`HIT` on a repeat request).
+`/api/deals` and `/api/stores` answer the same for every visitor, so successful responses carry `Cache-Control: public, s-maxage=900, stale-while-revalidate=300` (`SHARED_CACHE_CONTROL` in `config.py`): the Vercel CDN keeps them 15 min. Vercel strips those directives before the browser gets the response (browsers see only `public`); locally, without Vercel, a browser may show a copy up to 5 min old while it refreshes it. Error responses are never cached. Check a deployment with the `x-vercel-cache` response header (`HIT` on a repeat request). Preview deployments are behind Vercel login, so check them in a logged-in browser, not with curl.
 
 1. Push to GitHub
 2. Import the repo on vercel.com (Root Directory: repo root)

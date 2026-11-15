@@ -445,7 +445,7 @@
         "Walk through every workflow in the browser",
         "Check on a Vercel preview that repeat /api/deals requests are served from the CDN cache (x-vercel-cache: HIT); leave passes false until checked"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "home-02",
