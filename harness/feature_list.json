@@ -765,7 +765,7 @@
         "cd frontend && npm run type-check && npm run lint pass",
         "Walk through every workflow in the browser, with keyboard only"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "discover-02",

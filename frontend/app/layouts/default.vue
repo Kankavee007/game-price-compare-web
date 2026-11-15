@@ -1,13 +1,16 @@
 <script setup lang="ts">
 const wishlist = useWishlist()
+const route = useRoute()
 </script>
 
 <template>
   <div class="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white">
     <header class="border-b border-gray-700">
-      <nav class="max-w-6xl mx-auto flex items-center justify-between gap-4 p-4">
+      <nav class="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-x-4 gap-y-2 p-4">
         <NuxtLink to="/" class="text-xl font-bold">🎮 Game Price Compare</NuxtLink>
-        <ul class="flex gap-4 text-gray-300">
+        <!-- The search page has its own search box -->
+        <QuickSearch v-if="route.path !== '/'" class="ml-auto" />
+        <ul class="flex items-center gap-4 text-gray-300">
           <li>
             <NuxtLink to="/" class="hover:text-white" active-class="text-white font-semibold"
               >Search</NuxtLink
