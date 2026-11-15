@@ -2,7 +2,7 @@ import time
 
 from .. import config
 from ..errors import UpstreamError, UpstreamNotFoundError
-from ..http import get_json, get_json_with_headers
+from ..http import get_json, get_json_with_headers, get_text
 
 _stores = []  # see get_stores
 _store_fetched_at = 0.0
@@ -132,3 +132,58 @@ def get_store_names():
         return {s["storeID"]: s["storeName"] for s in get_stores()}
     except UpstreamError:
         return {}
+
+
+def set_alert(email, game_id, price_usd):
+    """Create or update a CheapShark email alert: CheapShark emails `email` when the game's
+    price drops below `price_usd`. Calling it again for the same email and game updates the price.
+
+    Returns True when CheapShark accepted it (it answers a bare true / false).
+
+    The email is in the request URL (CheapShark only takes GET params), and requests puts that
+    URL in its error messages. So errors are re-raised with a fixed message and no cause
+    (`from None`): a logged traceback must never contain the email.
+
+    Raises:
+        UpstreamError: CheapShark is down or answered something that is not JSON
+    """
+    try:
+        data = get_json(
+            f"{config.CHEAPSHARK_BASE_URL}/alerts",
+            {"action": "set", "email": email, "gameID": game_id, "price": f"{price_usd:.2f}"},
+        )
+    except UpstreamError:
+        raise UpstreamError(f"CheapShark alert for game {game_id}: request failed") from None
+    return data is True
+
+
+def manage_alerts(email):
+    """Ask CheapShark to email `email` a link to view, change or delete its price alerts.
+
+    CheapShark answers in plain text, not JSON (checked live 2026-11-16):
+    - 200: the email is sent
+    - 400 "No alerts found for email": the address has no alerts
+    - 400 "Link was already sent recently": a link was sent a short while ago; CheapShark
+      will not send another yet, the earlier one is still valid
+    Returns "sent", "alreadySent" or "noAlerts".
+
+    The email is in the request URL, so errors never carry it: network errors get a fixed
+    message, and CheapShark's reply has the address removed before it goes in the message.
+
+    Raises:
+        UpstreamError: CheapShark is down or answered something else
+    """
+    try:
+        status, text = get_text(
+            f"{config.CHEAPSHARK_BASE_URL}/alerts", {"action": "manage", "email": email}
+        )
+    except UpstreamError:
+        raise UpstreamError("CheapShark manage alerts: request failed") from None
+    if status == 200:
+        return "sent"
+    if status == 400 and "already sent" in text.lower():
+        return "alreadySent"
+    if status == 400 and "no alerts" in text.lower():
+        return "noAlerts"
+    reply = text.replace(email, "<email>")[:100].strip()
+    raise UpstreamError(f"CheapShark manage alerts: HTTP {status}: {reply!r}")

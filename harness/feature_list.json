@@ -12,7 +12,8 @@
     "CheapShark prices are USD. Price filters typed in THB/EUR are converted to USD before calling CheapShark, then results are checked again after conversion so every shown price is inside the range the user typed.",
     "Landing page lists (top rated, new, free, biggest discounts) are the same for every visitor: cache raw CheapShark /deals responses in memory for 15 min and send Cache-Control so the Vercel CDN can cache /api responses. In-memory cache is per serverless instance, so it only reduces load, it is not shared.",
     "Wishlist and recently viewed are stored in the browser (localStorage), no accounts. Pages /wishlist and /browse use query strings (/browse?genre=12), not dynamic paths, so they can be prerendered like /about and need no vercel.json change.",
-    "Price alerts use CheapShark GET /alerts?action=set&email=&gameID=&price= (price in USD). CheapShark sends the emails, so the user's email address leaves our server; the form must say so. The browser POSTs to Flask so the email is not in our URLs or access logs."
+    "Price alerts use CheapShark GET /alerts?action=set&email=&gameID=&price= (price in USD). CheapShark sends the emails, so the user's email address leaves our server; the form must say so. The browser POSTs to Flask so the email is not in our URLs or access logs.",
+    "Alert rate limits per IP per hour (owner's choice, 2026-11-16): set alert 10, manage email 5, counted separately (config.ALERTS_LIMITS). alert-01 says 'e.g. more than 5'; the final value for setting alerts is 10."
   ],
   "features": [
     {
@@ -678,7 +679,7 @@
         "Add tests with CheapShark mocked: conversion, each 400, 429, 502, and that the email is not logged",
         "cd backend && pytest stays green; update README endpoint list"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "alert-02",
@@ -705,7 +706,38 @@
         "cd frontend && npm run type-check && npm run lint pass",
         "Walk through every workflow in the browser; create one real alert with the owner's own email only after the owner says yes"
       ],
-      "passes": false
+      "passes": true
+    },
+    {
+      "id": "alert-03",
+      "phase": 8,
+      "category": "functional",
+      "description": "Manage price alerts: user enters an email and CheapShark emails a link to view, change or delete their alerts",
+      "workflows": {
+        "main": [
+          "User opens /alerts (linked from the price alert form and the success message), enters their email, clicks 'Email me my alerts'",
+          "Frontend POSTs { email } to /api/alerts/manage; Flask calls CheapShark /alerts?action=manage",
+          "Page shows 'Check your inbox: CheapShark has sent a link to manage your alerts.' (status 'sent')"
+        ],
+        "alternate": [
+          "Email with no alerts: CheapShark answers 400 'No alerts found for email' (plain text, checked live 2026-11-16); our API answers 200 { ok: true, status: 'noAlerts' } and the page says there are no alerts for this email, with a hint to set one with 🔔 on a game page (owner's choice: CheapShark's public API already reveals this, so the page says it too)",
+          "Link asked for again soon after: CheapShark answers 400 'Link was already sent recently' and sends nothing new; our API answers 200 { ok: true, status: 'alreadySent' } and the page says a link was already sent recently, to use it (check spam) or ask again later"
+        ],
+        "error": [
+          "Invalid or empty email: inline field error, no request sent; the API answers 400 if called directly",
+          "Too many requests from one IP (more than 5 per hour; setting alerts has its own limit of 10): 429 'Too many requests, try later' under the form, input kept",
+          "CheapShark answers false or is down: 502 'Could not send the email, try again later' under the form, input kept",
+          "The email never appears in logs or URLs (POST body only)"
+        ]
+      },
+      "steps": [
+        "Add cheapshark.manage_alerts(email), services/alerts.manage_alerts (validation, rate limit) and POST /api/alerts/manage",
+        "Add tests with CheapShark mocked: ok, 400, 429, 502, email not logged",
+        "Add pages/alerts.vue (prerendered like /wishlist) with the same note that the email goes to CheapShark; link to it from PriceAlertForm",
+        "cd backend && pytest; cd frontend && npm run type-check && npm run lint pass; update README",
+        "Walk through every workflow in the browser; send one real manage email to the owner's address only, typed by the owner"
+      ],
+      "passes": true
     },
     {
       "id": "discover-01",

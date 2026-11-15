@@ -23,3 +23,9 @@ DEALS_CACHE_MAX_ENTRIES = 200  # drop the oldest entry above this, so memory sta
 # browsers only see "public". Without Vercel (local Flask, Docker) a browser does see
 # stale-while-revalidate and may show its copy for up to 5 min while it refreshes.
 SHARED_CACHE_CONTROL = "public, s-maxage=900, stale-while-revalidate=300"
+# Price alerts (POST /api/alerts): best-effort limit per client IP, kept in memory per
+# serverless instance, so it slows down abuse but is not a hard global limit.
+# Per action: setting alerts is the normal use (one per game), the manage email is rarely needed
+# and sends an email to any address typed, so it gets the lower limit.
+ALERTS_LIMITS = {"set": 10, "manage": 5}  # requests per IP per window
+ALERTS_WINDOW_SECONDS = 60 * 60  # 1 ชั่วโมง
