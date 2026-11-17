@@ -9,6 +9,9 @@ log = logging.getLogger(__name__)
 
 IGDB_COVER_URL = "https://images.igdb.com/igdb/image/upload/t_cover_big/{}.jpg"
 SIMILAR_LIMIT = 6
+# Screenshots: 889x500 for the strip, 1920x1080 (or smaller if IGDB has no bigger) for the full view
+IGDB_SCREENSHOT_URL = "https://images.igdb.com/igdb/image/upload/{size}/{image_id}.jpg"
+SCREENSHOT_LIMIT = 12
 
 
 def get_game_detail(game_id, currency):
@@ -57,6 +60,7 @@ def get_game_detail(game_id, currency):
         "summary": found.get("summary"),
         "releaseDate": _to_date(found.get("first_release_date")),
         "similarGames": _similar_games(found.get("similar_games")),
+        "screenshots": _screenshots(found.get("screenshots")),
         "currency": currency,
         "deals": deals,
         **lowest_price_fields(
@@ -112,6 +116,27 @@ def _similar_games(games):
             "cover": IGDB_COVER_URL.format(cover_id) if cover_id else None,
         })
         if len(result) == SIMILAR_LIMIT:
+            break
+    return result
+
+
+def _screenshots(shots):
+    """IGDB screenshots as [{thumb, full}], at most SCREENSHOT_LIMIT; [] when there are none.
+
+    image_id goes into the URL path, so only plain letters and digits are used.
+    """
+    if not isinstance(shots, list):
+        return []
+    result = []
+    for shot in shots:
+        image_id = shot.get("image_id") if isinstance(shot, dict) else None
+        if not (isinstance(image_id, str) and image_id.isascii() and image_id.isalnum()):
+            continue
+        result.append({
+            "thumb": IGDB_SCREENSHOT_URL.format(size="t_screenshot_big", image_id=image_id),
+            "full": IGDB_SCREENSHOT_URL.format(size="t_1080p", image_id=image_id),
+        })
+        if len(result) == SCREENSHOT_LIMIT:
             break
     return result
 

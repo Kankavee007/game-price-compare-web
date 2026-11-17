@@ -208,3 +208,45 @@ def test_igdb_query_asks_for_similar_games(monkeypatch):
     monkeypatch.setattr(igdb, "post_json", lambda url, body, headers: sent.append(body) or [IGDB_GAME])
     REAL_FIND_GAME("21000", "LEGO Batman")
     assert "similar_games.name" in sent[0] and "similar_games.cover.image_id" in sent[0]
+
+
+def test_screenshots_with_sizes_and_limit(client, monkeypatch):
+    shots = [{"id": i, "image_id": f"sc{i}"} for i in range(14)]
+    shots.insert(1, {"id": 98})  # no image_id: skipped
+    shots.insert(2, {"id": 99, "image_id": "../x"})  # not a plain id: skipped
+    monkeypatch.setattr(
+        igdb, "find_game", lambda steam_app_id, title: {**IGDB_GAME, "screenshots": shots}
+    )
+    body = client.get("/api/games/612").get_json()
+
+    assert len(body["screenshots"]) == 12
+    assert body["screenshots"][0] == {
+        "thumb": "https://images.igdb.com/igdb/image/upload/t_screenshot_big/sc0.jpg",
+        "full": "https://images.igdb.com/igdb/image/upload/t_1080p/sc0.jpg",
+    }
+    assert body["screenshots"][1]["thumb"].endswith("/sc1.jpg")
+
+
+def test_no_screenshots(client):
+    assert client.get("/api/games/612").get_json()["screenshots"] == []
+
+
+@pytest.mark.parametrize("found", [None, UpstreamError("IGDB down")])
+def test_no_screenshots_when_igdb_has_no_match_or_fails(client, monkeypatch, found):
+    def find_game(steam_app_id, title):
+        if isinstance(found, Exception):
+            raise found
+        return found
+
+    monkeypatch.setattr(igdb, "find_game", find_game)
+    body = client.get("/api/games/612").get_json()
+    assert body["screenshots"] == []
+    assert body["deals"]
+
+
+def test_igdb_query_asks_for_screenshots(monkeypatch):
+    sent = []
+    monkeypatch.setattr(igdb, "_get_token", lambda: "token")
+    monkeypatch.setattr(igdb, "post_json", lambda url, body, headers: sent.append(body) or [IGDB_GAME])
+    REAL_FIND_GAME("21000", "LEGO Batman")
+    assert "screenshots.image_id" in sent[0]

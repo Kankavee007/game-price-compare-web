@@ -55,6 +55,12 @@ export interface SimilarGame {
   cover: string | null
 }
 
+/** IGDB screenshot: thumb is 889x500 for the strip, full is up to 1920x1080 */
+export interface Screenshot {
+  thumb: string
+  full: string
+}
+
 export interface GameDetail extends LowestPrice {
   id: string
   name: string
@@ -67,6 +73,7 @@ export interface GameDetail extends LowestPrice {
   summary: string | null
   releaseDate: string | null // YYYY-MM-DD
   similarGames: SimilarGame[] // from IGDB, up to 6; [] when none or IGDB failed
+  screenshots: Screenshot[] // from IGDB, up to 12; [] when none or IGDB failed
   genreTags: Genre[] // same as genres, with the IGDB id for /browse?genre=<id>
   currency: Currency
   deals: Deal[] // cheapest first

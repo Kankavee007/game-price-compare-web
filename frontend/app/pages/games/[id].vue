@@ -191,6 +191,9 @@ function formatDate(isoDate: string) {
         </div>
       </section>
 
+      <!-- IGDB screenshots. Hidden when there are none or IGDB failed -->
+      <ScreenshotGallery :screenshots="game.screenshots" :game-name="game.name" />
+
       <section class="space-y-4">
         <div class="flex flex-wrap items-center justify-between gap-4">
           <h2 class="text-xl font-semibold">Prices in every store</h2>
