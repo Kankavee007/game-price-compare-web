@@ -30,14 +30,15 @@ function navTo(path: string) {
           :to="navTo('/')"
           class="flex items-center gap-2 font-display text-lg sm:text-xl font-bold rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         >
-          <span
-            aria-hidden="true"
-            class="grid place-items-center w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-gradient-to-br from-accent-strong to-accent-2 shadow-glow text-base"
-            >🎮</span
-          >
-          <span class="bg-gradient-to-r from-fg to-accent bg-clip-text text-transparent"
-            >Game Price Compare</span
-          >
+          <!-- Small area: the cropped mark only (public/brand/pixsales-mark.png); the name is text -->
+          <img
+            src="/brand/pixsales-mark.png"
+            alt=""
+            width="36"
+            height="36"
+            class="w-8 h-8 sm:w-9 sm:h-9 -my-1"
+          />
+          <span>Pix<span class="text-brand">Sales</span></span>
         </NuxtLink>
         <!-- The search page has its own search box -->
         <QuickSearch v-if="route.path !== '/'" class="ml-auto" />

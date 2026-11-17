@@ -4,11 +4,11 @@ useHead({ title: 'About' })
 
 <template>
   <article class="max-w-2xl mx-auto space-y-4 text-fg/80">
+    <BrandLogo class="pb-4" />
     <h1 class="text-3xl font-bold">About</h1>
     <p>
-      Game Price Compare finds the cheapest current deal for a game across PC stores and shows the
-      price in your currency. Each game also has a page that lists every store's price, cheapest
-      first.
+      PixSales finds the cheapest current deal for a game across PC stores and shows the price in
+      your currency. Each game also has a page that lists every store's price, cheapest first.
     </p>
 
     <h2 class="text-xl font-semibold pt-2">Where the data comes from</h2>

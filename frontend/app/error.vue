@@ -2,12 +2,17 @@
 import type { NuxtError } from '#app'
 
 const props = defineProps<{ error: NuxtError }>()
-useHead({ title: props.error.statusCode === 404 ? 'Page not found' : 'Error' })
+// error.vue renders outside app.vue, so it repeats the site title template
+useHead({
+  title: props.error.statusCode === 404 ? 'Page not found' : 'Error',
+  titleTemplate: '%s - PixSales',
+})
 </script>
 
 <template>
   <NuxtLayout>
     <div class="text-center space-y-4 py-16">
+      <BrandLogo :tagline="false" class="pb-6 opacity-90" />
       <h1 class="text-3xl font-bold">
         {{ error.statusCode === 404 ? 'Page not found' : 'Something went wrong' }}
       </h1>

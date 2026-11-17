@@ -35,7 +35,14 @@ export default defineNuxtConfig({
     // Fade + small slide between pages; CSS in assets/css/main.css (.page-*)
     pageTransition: { name: 'page', mode: 'out-in' },
     head: {
-      title: 'Game Price Compare',
+      title: 'PixSales - Pixel Perfect Deals',
+      meta: [
+        {
+          name: 'description',
+          content:
+            'PixSales finds the cheapest price for a PC game across stores, in your currency.',
+        },
+      ],
       // Apply the saved color preset before the first paint, so there is no flash of the
       // default colors. Keep the names in sync with THEMES in composables/useTheme.ts.
       script: [
@@ -45,7 +52,9 @@ export default defineNuxtConfig({
         },
       ],
       link: [
-        { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
+        // PixSales mark on a dark tile (public/favicon.png), so it shows on light and dark tabs
+        { rel: 'icon', type: 'image/png', href: '/favicon.png' },
+        { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
         // Theme fonts; display=swap shows the system font until they load (or if they fail)
         { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
         { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },

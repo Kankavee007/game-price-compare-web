@@ -1109,7 +1109,7 @@
         "cd frontend && npm run type-check && npm run lint pass",
         "Check every page in the browser at 360px and desktop in all three presets"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "ui-01",

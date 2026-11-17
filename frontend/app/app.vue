@@ -1,6 +1,6 @@
 <script setup lang="ts">
 useHead({
-  titleTemplate: (title) => (title ? `${title} - Game Price Compare` : 'Game Price Compare'),
+  titleTemplate: (title) => (title ? `${title} - PixSales` : 'PixSales - Pixel Perfect Deals'),
 })
 </script>
 

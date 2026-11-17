@@ -202,13 +202,26 @@ onBeforeUnmount(() => {
   moreController?.abort()
 })
 
-// app.vue adds " - Game Price Compare"; an empty title shows the site name only
+// app.vue adds " - PixSales"; an empty title shows "PixSales - Pixel Perfect Deals"
 useHead({ title: () => query.value.trim() })
 </script>
 
 <template>
   <div>
-    <h1 class="sr-only">Search game prices</h1>
+    <h1 class="sr-only">PixSales: search game prices</h1>
+
+    <!-- Hero only on the landing view; once a search or filter is set it collapses so the
+         results stay near the top -->
+    <Transition
+      enter-active-class="transition-all duration-300 ease-out"
+      enter-from-class="opacity-0 max-h-0"
+      enter-to-class="opacity-100 max-h-60"
+      leave-active-class="transition-all duration-200 ease-in overflow-hidden"
+      leave-from-class="opacity-100 max-h-60"
+      leave-to-class="opacity-0 max-h-0"
+    >
+      <BrandLogo v-if="showLanding" class="pt-2 pb-8" />
+    </Transition>
 
     <!-- Desktop: results on the left, discount sidebar on the right. Smaller: sidebar below. -->
     <div class="lg:grid lg:grid-cols-[minmax(0,1fr)_18rem] lg:gap-8">

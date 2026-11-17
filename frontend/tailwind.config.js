@@ -26,6 +26,7 @@ export default {
         warn: token('warn'),
         danger: token('danger'), // error text
         'danger-strong': token('danger-strong'), // filled red badges and buttons
+        brand: token('brand'), // PixSales logo green, the same in every preset
       },
       fontFamily: {
         sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
