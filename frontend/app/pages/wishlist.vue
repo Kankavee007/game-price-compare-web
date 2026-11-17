@@ -82,9 +82,6 @@ useHead({ title: 'Wishlist' })
   <div class="space-y-6">
     <div class="flex flex-wrap items-center justify-between gap-4">
       <h1 class="text-3xl font-bold">♥ Wishlist</h1>
-      <ClientOnly>
-        <CurrencySelect v-if="wishlist.count.value" v-model="currency" />
-      </ClientOnly>
     </div>
 
     <ClientOnly>

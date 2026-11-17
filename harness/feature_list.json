@@ -925,6 +925,36 @@
         "Walk through every workflow in the browser; update README and the about page"
       ],
       "passes": true
+    },
+    {
+      "id": "header-01",
+      "phase": 11,
+      "category": "functional",
+      "description": "Currency dropdown lives in the top bar and the top bar stays visible while scrolling",
+      "workflows": {
+        "main": [
+          "User opens any page; the top bar shows logo, quick search, nav links and the currency dropdown",
+          "User scrolls down a long page (search results, game page); the top bar stays pinned at the top over the content",
+          "User picks THB in the top bar; the current page reloads its prices in THB and the URL gets ?currency=THB as today"
+        ],
+        "alternate": [
+          "User clicks a top bar nav link (Search, Browse, Wishlist) while on THB: the next page opens in THB, not reset to USD",
+          "Phone width: top bar wraps to two rows, stays pinned, and does not cover more than its own height; no horizontal scroll",
+          "Page-level currency dropdowns (search, browse, wishlist, game page) are removed so there is only one control"
+        ],
+        "error": [
+          "Unknown currency in the URL (?currency=XYZ): dropdown shows USD and prices load in USD, as today",
+          "Quick search results dropdown and the screenshot full view still open above the pinned top bar, nothing hidden behind it"
+        ]
+      },
+      "steps": [
+        "Add CurrencySelect to layouts/default.vue bound to route.query.currency (router.replace), and pass currency on nav links",
+        "Make the header sticky (sticky top-0, solid/blurred background, z-index below modals and above content)",
+        "Remove the CurrencySelect from pages/index.vue, browse.vue, wishlist.vue and games/[id].vue; pages keep reading currency from the URL",
+        "cd frontend && npm run type-check && npm run lint pass",
+        "Open the app at phone and desktop widths and walk through every workflow above"
+      ],
+      "passes": true
     }
   ]
 }

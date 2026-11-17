@@ -210,12 +210,6 @@ useHead({ title: () => query.value.trim() })
   <div>
     <h1 class="sr-only">Search game prices</h1>
 
-    <div class="flex justify-center">
-      <CurrencySelect v-model="currency" />
-    </div>
-
-    <hr class="my-6 border-gray-700" />
-
     <!-- Desktop: results on the left, discount sidebar on the right. Smaller: sidebar below. -->
     <div class="lg:grid lg:grid-cols-[minmax(0,1fr)_18rem] lg:gap-8">
       <div>
@@ -292,7 +286,7 @@ useHead({ title: () => query.value.trim() })
         </div>
       </div>
 
-      <aside class="mt-10 lg:mt-0 lg:sticky lg:top-4 lg:self-start">
+      <aside class="mt-10 lg:mt-0 lg:sticky lg:top-24 lg:self-start">
         <DiscountSidebar :currency="currency" />
       </aside>
     </div>

@@ -108,9 +108,6 @@ useHead({ title: () => (pickedName.value ? `Browse ${pickedName.value}` : 'Brows
         Browse <span v-if="pickedName" class="text-blue-300">{{ pickedName }}</span
         ><span v-else>by genre</span>
       </h1>
-      <ClientOnly>
-        <CurrencySelect v-if="genreParam" v-model="currency" />
-      </ClientOnly>
     </div>
 
     <!-- Genre list: always shown so another genre is one click away -->
