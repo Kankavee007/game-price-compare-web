@@ -76,7 +76,7 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', onPointerDown)
     <button
       ref="button"
       type="button"
-      class="field flex items-center gap-2 p-2 pr-3 text-base disabled:opacity-60 disabled:cursor-not-allowed"
+      class="field flex w-full h-10 items-center justify-between gap-2 px-3 text-sm text-left disabled:opacity-60 disabled:cursor-not-allowed"
       :class="selected.length ? 'border-accent/60 text-fg' : ''"
       :disabled="status !== 'ready' || !stores.length"
       :aria-expanded="open"
@@ -84,7 +84,7 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', onPointerDown)
       aria-controls="store-select-panel"
       @click="open ? hide() : show()"
     >
-      {{ label }}
+      <span class="truncate">{{ label }}</span>
       <span
         aria-hidden="true"
         class="text-xs text-muted transition-transform"

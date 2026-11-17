@@ -111,42 +111,48 @@ function reset() {
       class="panel mt-3 md:mt-0 space-y-4 p-4"
       :class="open ? 'block' : 'hidden md:block'"
     >
-      <div class="flex flex-wrap items-end gap-4">
-        <fieldset class="flex items-end gap-2">
+      <!-- Four equal boxes: one per row on phones, two on tablets, four from lg up -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <fieldset class="flex flex-col gap-1 min-w-0">
           <legend class="text-sm text-muted mb-1">Price ({{ currency }})</legend>
-          <input
-            :value="minText"
-            type="number"
-            inputmode="decimal"
-            min="0"
-            step="any"
-            placeholder="Min"
-            aria-label="Minimum price"
-            class="field w-24 p-2"
-            :aria-invalid="!!rangeError"
-            aria-describedby="price-error"
-            @input="onPrice('minPrice', ($event.target as HTMLInputElement).value)"
-          />
-          <span class="pb-2 text-subtle">–</span>
-          <input
-            :value="maxText"
-            type="number"
-            inputmode="decimal"
-            min="0"
-            step="any"
-            placeholder="Max"
-            aria-label="Maximum price"
-            class="field w-24 p-2"
-            :aria-invalid="!!rangeError"
-            aria-describedby="price-error"
-            @input="onPrice('maxPrice', ($event.target as HTMLInputElement).value)"
-          />
+          <!-- Min and max share one box, the same size as the dropdowns -->
+          <div
+            class="field flex h-10 items-center gap-1 px-3 focus-within:ring-2 focus-within:ring-accent focus-within:border-transparent"
+            :class="{ '!border-danger': rangeError }"
+          >
+            <input
+              :value="minText"
+              type="number"
+              inputmode="decimal"
+              min="0"
+              step="any"
+              placeholder="Min"
+              aria-label="Minimum price"
+              class="w-full min-w-0 bg-transparent text-sm placeholder:text-subtle focus:outline-none"
+              :aria-invalid="!!rangeError"
+              aria-describedby="price-error"
+              @input="onPrice('minPrice', ($event.target as HTMLInputElement).value)"
+            />
+            <span class="text-subtle" aria-hidden="true">–</span>
+            <input
+              :value="maxText"
+              type="number"
+              inputmode="decimal"
+              min="0"
+              step="any"
+              placeholder="Max"
+              aria-label="Maximum price"
+              class="w-full min-w-0 bg-transparent text-sm text-right placeholder:text-subtle focus:outline-none"
+              :aria-invalid="!!rangeError"
+              aria-describedby="price-error"
+              @input="onPrice('maxPrice', ($event.target as HTMLInputElement).value)"
+            />
+          </div>
         </fieldset>
 
-        <div class="flex flex-col text-sm text-muted">
+        <div class="flex flex-col gap-1 min-w-0 text-sm text-muted">
           <span aria-hidden="true">Sort by</span>
           <PickSelect
-            class="mt-1"
             label="Sort by"
             :model-value="sortValue"
             :options="sortPickOptions"
@@ -154,10 +160,9 @@ function reset() {
           />
         </div>
 
-        <div class="flex flex-col text-sm text-muted">
+        <div class="flex flex-col gap-1 min-w-0 text-sm text-muted">
           <span aria-hidden="true">Steam rating</span>
           <PickSelect
-            class="mt-1"
             label="Steam rating"
             :model-value="filters.minRating === null ? '' : String(filters.minRating)"
             :options="ratingPickOptions"
@@ -165,18 +170,19 @@ function reset() {
           />
         </div>
 
-        <div class="flex flex-col text-sm text-muted">
+        <div class="flex flex-col gap-1 min-w-0 text-sm text-muted">
           <span aria-hidden="true">Stores</span>
           <StoreSelect
-            class="mt-1"
             :model-value="filters.stores"
             :stores="stores"
             :status="storeStatus"
             @update:model-value="update({ stores: $event })"
           />
         </div>
+      </div>
 
-        <label class="flex items-center gap-2 pb-2 cursor-pointer">
+      <div class="flex flex-wrap items-center gap-4">
+        <label class="flex items-center gap-2 text-sm cursor-pointer">
           <input
             type="checkbox"
             :checked="filters.onSale"
@@ -189,7 +195,7 @@ function reset() {
         <button
           v-if="count"
           type="button"
-          class="ml-auto pb-2 text-accent hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded"
+          class="ml-auto text-sm text-accent hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded"
           @click="reset"
         >
           Reset ({{ count }})

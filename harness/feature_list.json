@@ -1134,7 +1134,7 @@
         "cd frontend && npm run type-check && npm run lint pass",
         "Check at 360px, 768px and desktop widths"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "ui-02",
