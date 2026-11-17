@@ -15,7 +15,8 @@
     "Price alerts use CheapShark GET /alerts?action=set&email=&gameID=&price= (price in USD). CheapShark sends the emails, so the user's email address leaves our server; the form must say so. The browser POSTs to Flask so the email is not in our URLs or access logs.",
     "Alert rate limits per IP per hour (owner's choice, 2026-11-16): set alert 10, manage email 5, counted separately (config.ALERTS_LIMITS). alert-01 says 'e.g. more than 5'; the final value for setting alerts is 10.",
     "Phase 10 fixes card images. CheapShark only gives a small landscape 'thumb' (Steam capsule 231x87 or a store image). Portrait art comes from Steam's library_600x900.jpg built from steamAppID (no API call); it returns 404 for some new games (hashed asset paths) and games not on Steam have no steamAppID, so the browser falls back to the landscape thumb, shown whole (object-contain) over a blurred copy instead of cropped. Detail page screenshots come from IGDB (screenshots.image_id, added to the existing find_game query, no extra request): t_screenshot_big (889x500) in the strip, t_1080p in the full view.",
-    "Phase 12 (redesign): all colors are CSS variables (--c-bg, --c-surface, --c-accent...) exposed to Tailwind as semantic names (bg-surface, text-accent), so presets only swap variables on <html data-theme>. Motion uses CSS transitions + one IntersectionObserver directive, and is turned off under prefers-reduced-motion."
+    "Phase 12 (redesign): all colors are CSS variables (--c-bg, --c-surface, --c-accent...) exposed to Tailwind as semantic names (bg-surface, text-accent), so presets only swap variables on <html data-theme>. Motion uses CSS transitions + one IntersectionObserver directive, and is turned off under prefers-reduced-motion.",
+    "Phase 13 (brand + controls): brand is 'PixSales - Pixel Perfect Deals'. Source artwork pictures/pixsales.png (white + green on transparent); public/brand/pixsales-logo.png is the trimmed full logo for large areas, public/brand/pixsales-mark.png the cropped 'P' controller mark for small areas (header, favicon). Native <select> controls are replaced by one shared PickSelect component styled like StoreSelect."
   ],
   "features": [
     {
@@ -1078,6 +1079,89 @@
         "Walk through every workflow in the browser at phone and desktop widths"
       ],
       "passes": true
+    },
+    {
+      "id": "brand-01",
+      "phase": 13,
+      "category": "functional",
+      "description": "Rebrand the site from Game Price Compare to PixSales - Pixel Perfect Deals with the new logo",
+      "workflows": {
+        "main": [
+          "User opens any page; the top bar shows the PixSales mark (the 'P' controller icon) with the name PixSales; the browser tab shows 'PixSales' titles and the mark as favicon",
+          "User opens /about; the full PixSales logo (mark + wordmark) is shown large at the top with the tagline 'Pixel Perfect Deals'",
+          "User opens the search page (/) with no search typed; the full logo and 'Pixel Perfect Deals' show above the search box; once a search is typed the hero shrinks away so results stay near the top",
+          "User opens a missing page (404); the full logo shows above the error message"
+        ],
+        "alternate": [
+          "Page with its own title (a game, a search): tab reads '<title> - PixSales'; home tab reads 'PixSales - Pixel Perfect Deals'",
+          "Phone width: top bar keeps two rows (360px and up); the mark stays sharp at small size",
+          "Any color preset (Nebula, Lime, Ember): logo stays readable on the dark background"
+        ],
+        "error": [
+          "Logo image fails to load: alt text 'PixSales' shows, top bar layout does not break",
+          "Old name: no 'Game Price Compare' text left in pages, titles or README (repo name stays game-price-compare-web)"
+        ]
+      },
+      "steps": [
+        "Add public/brand/pixsales-logo.png (trimmed original) and pixsales-mark.png (cropped mark), favicon.png + apple-touch-icon.png from the mark",
+        "Top bar: mark + 'PixSales'; /about and the error page: full logo; update titleTemplate, head title/description, favicon link",
+        "Replace user-facing 'Game Price Compare' text (pages, README title); keep repo/package names",
+        "cd frontend && npm run type-check && npm run lint pass",
+        "Check every page in the browser at 360px and desktop in all three presets"
+      ],
+      "passes": false
+    },
+    {
+      "id": "ui-01",
+      "phase": 13,
+      "category": "functional",
+      "description": "Search filter boxes (Price, Sort by, Steam rating, Stores) all have the same size",
+      "workflows": {
+        "main": [
+          "User opens the search page; Price, Sort by, Steam rating and Stores sit in one row of four equal boxes with labels above, same height and width",
+          "Price is one box holding Min and Max with a dash between, the same size as the others"
+        ],
+        "alternate": [
+          "Tablet width: two equal boxes per row; phone width (inside the Filters panel): one box per row, full width",
+          "Long values ('Price: low to high', 'Stores (12)') are cut with an ellipsis, the box does not grow"
+        ],
+        "error": [
+          "Invalid price range (min > max): the price box gets a red border and the message below, other boxes keep their size"
+        ]
+      },
+      "steps": [
+        "Lay the four filters out in a grid of equal columns; merge the price inputs into one .field box",
+        "cd frontend && npm run type-check && npm run lint pass",
+        "Check at 360px, 768px and desktop widths"
+      ],
+      "passes": false
+    },
+    {
+      "id": "ui-02",
+      "phase": 13,
+      "category": "functional",
+      "description": "Every dropdown (Sort by, Steam rating, currency) uses the same custom design as the Stores dropdown",
+      "workflows": {
+        "main": [
+          "User clicks Sort by; a panel like the Stores one opens with the options, the current one ticked; clicking an option picks it, closes the panel and updates results and URL as today",
+          "Currency in the top bar opens the same style of panel (USD, THB, EUR with flags) and works as today"
+        ],
+        "alternate": [
+          "Keyboard: Enter/Space/Down opens, arrows and Home/End move, typing a letter jumps to an option, Enter picks, Esc closes; focus returns to the button",
+          "Shared link with ?sort=price&rating=80&currency=THB: the buttons show those values",
+          "Phone width: panels stay inside the screen"
+        ],
+        "error": [
+          "Unknown value in the URL (?sort=abc): button shows the default option, as today",
+          "Screen reader: the button announces its label and current value; options are announced as selected/not selected"
+        ]
+      },
+      "steps": [
+        "Build PickSelect (single-choice listbox popup, same look as StoreSelect) and use it for Sort by, Steam rating and CurrencySelect",
+        "cd frontend && npm run type-check && npm run lint pass",
+        "Walk through every workflow in the browser with mouse and keyboard at phone and desktop widths"
+      ],
+      "passes": false
     }
   ]
 }

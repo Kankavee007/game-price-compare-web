@@ -4,11 +4,15 @@ Instructions for AI coding agents (Claude Code and others) working on this repo.
 
 ## Role
 
-Help the owner implement and develop the **game-price-compare-web** website: a game price search
-(CheapShark + exchange rates) with a game detail page (IGDB info + every store's price).
+Help the owner implement and develop the **game-price-compare-web** website (brand: **PixSales -
+Pixel Perfect Deals**): a game price search (CheapShark + exchange rates) with a game detail page
+(IGDB info + every store's price).
 
-- `frontend/`: Nuxt 4 (Vue 3, TypeScript) + Tailwind, `ssr: false`, prerendered with `nuxt generate`
-- `backend/`: Flask API (`/api/search`, `/api/games/<id>`, `/api/health`)
+- `frontend/`: Nuxt 4 (Vue 3, TypeScript) + Tailwind, every page prerendered with `nuxt generate`.
+  `ssr: true` by default (build-time only), with `routeRules` turning SSR off for `/` and
+  `/games/**` (client-only shells). `/about`, `/wishlist`, `/alerts`, `/browse` are SSR-prerendered.
+- `backend/`: Flask API under `/api/*` (search, deals, stores, prices, alerts, genres, browse,
+  games/<id>, health; full list in README)
 - `harness/feature_list.json`: feature specs and progress tracker
 - Deploy: Vercel Services (`vercel.json`), local Docker via `docker-compose.yml`
 
@@ -126,7 +130,24 @@ Frontend (`frontend/app/`):
 - Keep `types.ts` matching the API responses.
 - Pages are prerendered: no server-side data fetching. Dynamic routes need `routeRules` +
   a `vercel.json` route (see README "Deploy").
+- Browser-only state (localStorage, `<html data-theme>`, `window`) must be read on the client
+  (`onMounted`, `<ClientOnly>`). On SSR-prerendered routes `useState` arrives with the server's
+  value, so sync it after mount (see `useTheme().sync()`).
 - Tailwind for styling; handle loading, empty and error states on every data-driven view.
+- Theme: use the color tokens only (`bg-bg`, `bg-surface`, `bg-surface-2`, `border-line`, `text-fg`,
+  `text-muted`, `text-subtle`, `text-accent`, `bg-accent-strong`, `text-accent-2`, `text-success`,
+  `text-warn`, `text-danger`, `bg-danger-strong`), never raw palette classes like `gray-800` or
+  `blue-500`: they would break the presets (Nebula / Lime / Ember in `assets/css/main.css`).
+  A new preset must keep text at WCAG AA (4.5:1) on `bg`, `surface` and `surface-2`.
+- Reuse the shared classes in `main.css`: `.panel`, `.field`, `.btn-primary`, `.btn-ghost`,
+  `.nav-link`, `.skeleton`. Loading states use `.skeleton` shapes, not "Loading…" text.
+- Motion: `v-reveal` for things that should fade in on first view; keep transitions short
+  (≤ 0.5 s). Everything must still show under `prefers-reduced-motion` and without
+  IntersectionObserver.
+- Popovers (dropdowns, menus) follow `StoreSelect.vue` / `ThemeSwitcher.vue`: keyboard support,
+  Esc returns focus to the trigger, close on outside click, stay inside the screen on phones.
+- Brand assets live in `public/brand/` (full logo for large areas, mark-only for small ones).
+  The source artwork is `pictures/pixsales.png`.
 
 ## Checks before saying "done"
 
@@ -136,5 +157,12 @@ cd frontend && npm run type-check && npm run lint
 ```
 
 For UI changes also run the app (`FLASK_DEBUG=1 python app.py` + `npm run dev`) and check the page
-in the browser. Report results honestly: if a check fails or was skipped, say so.
+in the browser at phone (360px) and desktop widths. Report results honestly: if a check fails or
+was skipped, say so.
+
+- CheapShark rate-limits quickly (HTTP 429, shown as "price service unavailable"). Each search page
+  load makes 4+ requests, so do not reload data pages in a loop while testing; wait a few minutes
+  and test pages one at a time. Static pages (`/about`, `/alerts`) need no API.
+- Changing `tailwind.config.js` needs a dev server restart.
+
 Update `README.md` when env vars, endpoints, folder layout or run/deploy steps change.
