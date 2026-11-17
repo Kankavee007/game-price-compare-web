@@ -9,9 +9,11 @@ My first web project by myself
 
 ```
 frontend/
-  nuxt.config.ts          # prerender settings, Tailwind, dev proxy /api -> Flask
+  nuxt.config.ts          # prerender settings, Tailwind, Google Fonts (Inter, Space Grotesk), dev proxy /api -> Flask
+  tailwind.config.js      # theme colors as tokens (bg-surface, text-accent...) read from CSS variables
   app/
     app.vue               # root: <NuxtLayout> + <NuxtPage>, title template
+    assets/css/main.css   # theme: color variables (Nebula preset), .panel / .field / .btn-* / .nav-link classes
     layouts/default.vue   # sticky header: nav + site-wide currency select (?currency= in the URL)
     pages/                # file = route (index.vue -> /, about.vue -> /about, wishlist.vue -> /wishlist, alerts.vue -> /alerts, browse.vue -> /browse?genre=<id>, games/[id].vue -> /games/<id>)
     components/           # GameCard, CurrencySelect, SearchFilters, GameSection, DiscountSidebar, LowestBadge, WishlistHeart, WishlistSaleNotice, RecentlyViewed, PriceAlertForm, QuickSearch, GameImage (portrait cover with landscape fallback), ScreenshotGallery (auto-imported)

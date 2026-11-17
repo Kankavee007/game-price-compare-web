@@ -13,7 +13,7 @@ const query = computed(() => (props.currency !== 'USD' ? { currency: props.curre
       <h2 id="recent-heading" class="text-xl font-bold">Recently viewed</h2>
       <button
         type="button"
-        class="text-sm text-blue-400 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded"
+        class="text-sm text-accent hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded"
         @click="recent.clear()"
       >
         Clear
@@ -30,7 +30,7 @@ const query = computed(() => (props.currency !== 'USD' ? { currency: props.curre
       >
         <NuxtLink
           :to="{ path: `/games/${game.gameID}`, query }"
-          class="block rounded-xl overflow-hidden bg-gray-800 hover:bg-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+          class="block rounded-xl overflow-hidden bg-surface hover:bg-surface-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         >
           <GameImage
             :cover="game.cover"

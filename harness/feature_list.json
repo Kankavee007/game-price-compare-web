@@ -984,7 +984,7 @@
         "cd frontend && npm run type-check && npm run lint pass",
         "Open every page at phone and desktop widths and walk through every workflow above"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "theme-02",

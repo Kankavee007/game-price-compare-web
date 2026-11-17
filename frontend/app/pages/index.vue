@@ -218,14 +218,14 @@ useHead({ title: () => query.value.trim() })
           type="search"
           placeholder="Search game..."
           aria-label="Search game"
-          class="w-full p-3 rounded-xl bg-gray-800 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
+          class="field w-full px-4 py-3 text-lg rounded-2xl mb-4 shadow-lg shadow-black/20"
         />
 
         <SearchFilters v-model="filters" :currency="currency" :has-query="hasQuery" />
 
-        <p v-if="loading" class="text-center text-gray-400" role="status">Searching…</p>
-        <p v-else-if="error" class="text-center text-red-400" role="alert">⚠️ {{ error }}</p>
-        <p v-else-if="searched && games.length === 0" class="text-center text-gray-400">
+        <p v-if="loading" class="text-center text-muted" role="status">Searching…</p>
+        <p v-else-if="error" class="text-center text-danger" role="alert">⚠️ {{ error }}</p>
+        <p v-else-if="searched && games.length === 0" class="text-center text-muted">
           <template v-if="searched.query">
             No games found for "{{ searched.query }}"<template v-if="searched.filtered">
               with these filters</template
@@ -270,11 +270,11 @@ useHead({ title: () => query.value.trim() })
         <div v-if="games.length && !loading && hasMore" class="flex justify-center mt-8">
           <button
             type="button"
-            class="px-6 py-3 rounded-xl border focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:opacity-60"
+            class="px-6 py-3 rounded-xl border focus:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-60"
             :class="
               loadMoreError
-                ? 'border-red-500 text-red-300 hover:bg-red-500/10'
-                : 'border-gray-600 bg-gray-800 hover:bg-gray-700'
+                ? 'border-danger text-danger hover:bg-danger/10'
+                : 'border-line-strong bg-surface hover:bg-surface-2'
             "
             :disabled="loadingMore"
             @click="loadMore"

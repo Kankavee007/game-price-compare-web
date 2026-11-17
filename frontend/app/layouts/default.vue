@@ -19,55 +19,54 @@ function navTo(path: string) {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white">
+  <div class="min-h-screen">
     <!-- Pinned while scrolling. z-30: above page content and the quick search list's own z-20;
          the screenshot full view is a modal <dialog> in the top layer, so it stays above this. -->
-    <header class="sticky top-0 z-30 border-b border-gray-700 bg-gray-900/95 backdrop-blur">
+    <header class="sticky top-0 z-30 border-b border-line bg-bg/80 backdrop-blur">
       <nav
-        class="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-x-4 gap-y-2 p-4"
+        class="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-3 py-3 sm:p-4"
       >
-        <NuxtLink :to="navTo('/')" class="text-xl font-bold">🎮 Game Price Compare</NuxtLink>
+        <NuxtLink
+          :to="navTo('/')"
+          class="flex items-center gap-2 font-display text-xl font-bold rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        >
+          <span
+            aria-hidden="true"
+            class="grid place-items-center w-8 h-8 rounded-xl bg-gradient-to-br from-accent-strong to-accent-2 shadow-glow text-base"
+            >🎮</span
+          >
+          <span class="bg-gradient-to-r from-fg to-accent bg-clip-text text-transparent"
+            >Game Price Compare</span
+          >
+        </NuxtLink>
         <!-- The search page has its own search box -->
         <QuickSearch v-if="route.path !== '/'" class="ml-auto" />
         <!-- Links and currency share one row, so a phone gets two rows in all -->
-        <div class="flex items-center gap-3 sm:gap-4">
-          <ul class="flex items-center gap-3 sm:gap-4 text-gray-300">
+        <div class="flex flex-wrap items-center justify-end gap-1.5 sm:gap-4">
+          <ul class="flex items-center sm:gap-1 text-muted">
             <li>
-              <NuxtLink
-                :to="navTo('/')"
-                class="hover:text-white"
-                active-class="text-white font-semibold"
+              <NuxtLink :to="navTo('/')" class="nav-link" active-class="nav-link-active"
                 >Search</NuxtLink
               >
             </li>
             <li>
-              <NuxtLink
-                :to="navTo('/browse')"
-                class="hover:text-white"
-                active-class="text-white font-semibold"
+              <NuxtLink :to="navTo('/browse')" class="nav-link" active-class="nav-link-active"
                 >Browse</NuxtLink
               >
             </li>
             <li>
-              <NuxtLink
-                :to="navTo('/wishlist')"
-                class="hover:text-white"
-                active-class="text-white font-semibold"
-              >
+              <NuxtLink :to="navTo('/wishlist')" class="nav-link" active-class="nav-link-active">
                 Wishlist<ClientOnly
                   ><span
                     v-if="wishlist.count.value"
-                    class="ml-1 text-xs bg-red-600 text-white rounded-full px-1.5 py-0.5"
+                    class="ml-1 text-xs bg-danger-strong rounded-full px-1.5 py-0.5"
                     >{{ wishlist.count.value }}</span
                   ></ClientOnly
                 >
               </NuxtLink>
             </li>
             <li>
-              <NuxtLink
-                :to="navTo('/about')"
-                class="hover:text-white"
-                active-class="text-white font-semibold"
+              <NuxtLink :to="navTo('/about')" class="nav-link" active-class="nav-link-active"
                 >About</NuxtLink
               >
             </li>
@@ -85,12 +84,12 @@ function navTo(path: string) {
     <div
       v-if="wishlist.error.value"
       role="alert"
-      class="fixed bottom-4 inset-x-4 sm:left-auto sm:right-4 sm:max-w-sm flex items-start gap-3 p-4 rounded-xl bg-red-900/95 border border-red-500 shadow-lg"
+      class="fixed bottom-4 inset-x-4 sm:left-auto sm:right-4 sm:max-w-sm flex items-start gap-3 p-4 rounded-xl bg-surface/95 backdrop-blur border border-danger shadow-lg"
     >
       <p class="flex-1 text-sm">⚠️ {{ wishlist.error.value }}</p>
       <button
         type="button"
-        class="text-red-200 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded"
+        class="text-muted hover:text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded"
         aria-label="Dismiss"
         @click="wishlist.clearError()"
       >

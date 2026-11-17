@@ -10,9 +10,11 @@ defineProps<{ compact?: boolean }>()
   <select
     v-model="model"
     aria-label="Currency"
-    class="bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+    class="field"
     :class="compact ? 'px-2 py-1 text-sm' : 'px-4 py-2'"
   >
-    <option v-for="c in CURRENCIES" :key="c.code" :value="c.code">{{ c.label }}</option>
+    <option v-for="c in CURRENCIES" :key="c.code" :value="c.code">
+      {{ compact ? c.code : c.label }}
+    </option>
   </select>
 </template>

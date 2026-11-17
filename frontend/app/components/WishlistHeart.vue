@@ -12,13 +12,13 @@ const saved = computed(() => wishlist.has(props.game.gameID))
 <template>
   <button
     type="button"
-    class="w-9 h-9 flex items-center justify-center rounded-full bg-black/70 hover:bg-black/90 text-lg leading-none focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+    class="w-9 h-9 flex items-center justify-center rounded-full bg-black/70 hover:bg-black/90 text-lg leading-none focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
     :aria-pressed="saved"
     :aria-label="saved ? `Remove ${game.name} from wishlist` : `Add ${game.name} to wishlist`"
     :title="saved ? 'Remove from wishlist' : 'Add to wishlist'"
     @click="wishlist.toggle(game)"
   >
-    <span :class="saved ? 'text-red-500' : 'text-white'" aria-hidden="true">{{
+    <span :class="saved ? 'text-danger' : 'text-white'" aria-hidden="true">{{
       saved ? '♥' : '♡'
     }}</span>
   </button>

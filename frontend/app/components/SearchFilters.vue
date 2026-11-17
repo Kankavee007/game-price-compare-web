@@ -90,7 +90,7 @@ function reset() {
     <div class="flex items-center gap-3 md:hidden">
       <button
         type="button"
-        class="px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+        class="btn-ghost"
         :aria-expanded="open"
         aria-controls="search-filters"
         @click="open = !open"
@@ -101,12 +101,12 @@ function reset() {
 
     <div
       id="search-filters"
-      class="mt-3 md:mt-0 space-y-4 bg-gray-800/60 border border-gray-700 rounded-xl p-4"
+      class="panel mt-3 md:mt-0 space-y-4 p-4"
       :class="open ? 'block' : 'hidden md:block'"
     >
       <div class="flex flex-wrap items-end gap-4">
         <fieldset class="flex items-end gap-2">
-          <legend class="text-sm text-gray-400 mb-1">Price ({{ currency }})</legend>
+          <legend class="text-sm text-muted mb-1">Price ({{ currency }})</legend>
           <input
             :value="minText"
             type="number"
@@ -115,12 +115,12 @@ function reset() {
             step="any"
             placeholder="Min"
             aria-label="Minimum price"
-            class="w-24 p-2 rounded-lg bg-gray-900 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            class="field w-24 p-2"
             :aria-invalid="!!rangeError"
             aria-describedby="price-error"
             @input="onPrice('minPrice', ($event.target as HTMLInputElement).value)"
           />
-          <span class="pb-2 text-gray-500">–</span>
+          <span class="pb-2 text-subtle">–</span>
           <input
             :value="maxText"
             type="number"
@@ -129,18 +129,18 @@ function reset() {
             step="any"
             placeholder="Max"
             aria-label="Maximum price"
-            class="w-24 p-2 rounded-lg bg-gray-900 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            class="field w-24 p-2"
             :aria-invalid="!!rangeError"
             aria-describedby="price-error"
             @input="onPrice('maxPrice', ($event.target as HTMLInputElement).value)"
           />
         </fieldset>
 
-        <label class="flex flex-col text-sm text-gray-400">
+        <label class="flex flex-col text-sm text-muted">
           Sort by
           <select
             :value="sortValue"
-            class="mt-1 p-2 rounded-lg bg-gray-900 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            class="field mt-1 p-2"
             @change="
               update({
                 sort: (($event.target as HTMLSelectElement).value || null) as DealFilters['sort'],
@@ -152,11 +152,11 @@ function reset() {
           </select>
         </label>
 
-        <label class="flex flex-col text-sm text-gray-400">
+        <label class="flex flex-col text-sm text-muted">
           Steam rating
           <select
             :value="filters.minRating ?? ''"
-            class="mt-1 p-2 rounded-lg bg-gray-900 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+            class="field mt-1 p-2"
             @change="
               update({
                 minRating: toNumber(($event.target as HTMLSelectElement).value),
@@ -172,7 +172,7 @@ function reset() {
           <input
             type="checkbox"
             :checked="filters.onSale"
-            class="w-4 h-4 accent-blue-500"
+            class="w-4 h-4 accent-[rgb(var(--c-accent-strong))]"
             @change="update({ onSale: ($event.target as HTMLInputElement).checked })"
           />
           On sale only
@@ -181,14 +181,14 @@ function reset() {
         <button
           v-if="count"
           type="button"
-          class="ml-auto pb-2 text-blue-400 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded"
+          class="ml-auto pb-2 text-accent hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded"
           @click="reset"
         >
           Reset ({{ count }})
         </button>
       </div>
 
-      <p v-if="rangeError" id="price-error" class="text-sm text-red-400" role="alert">
+      <p v-if="rangeError" id="price-error" class="text-sm text-danger" role="alert">
         {{ rangeError }}
       </p>
 
@@ -198,11 +198,11 @@ function reset() {
           :key="s.storeID"
           type="button"
           :aria-pressed="filters.stores.includes(s.storeID)"
-          class="flex items-center gap-1.5 px-3 py-1 rounded-full border text-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+          class="flex items-center gap-1.5 px-3 py-1 rounded-full border text-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           :class="
             filters.stores.includes(s.storeID)
-              ? 'bg-blue-600 border-blue-500 text-white'
-              : 'bg-gray-900 border-gray-700 text-gray-300 hover:border-gray-500'
+              ? 'bg-accent-strong border-accent text-white'
+              : 'bg-bg border-line text-fg/80 hover:border-line-strong'
           "
           @click="toggleStore(s.storeID)"
         >

@@ -74,7 +74,7 @@ watch(
       <li v-for="(shot, index) in shown" :key="shot.thumb" class="w-64 sm:w-80 shrink-0 snap-start">
         <button
           type="button"
-          class="block w-full rounded-lg overflow-hidden bg-gray-800 hover:opacity-80 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+          class="block w-full rounded-lg overflow-hidden bg-surface hover:opacity-80 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           :aria-label="`Open screenshot ${index + 1} of ${shown.length}`"
           @click="open(index)"
         >
@@ -91,7 +91,7 @@ watch(
 
     <dialog
       ref="dialog"
-      class="m-auto w-full max-w-6xl bg-transparent p-0 text-white backdrop:bg-black/85"
+      class="m-auto w-full max-w-6xl bg-transparent p-0 backdrop:bg-black/85"
       :aria-label="`${gameName} screenshots`"
       @click="onDialogClick"
       @keydown="onKeydown"
@@ -104,13 +104,13 @@ watch(
           class="w-full max-h-[85vh] object-contain rounded-lg"
           @error="onFullError"
         />
-        <figcaption class="mt-2 text-center text-sm text-gray-300">
+        <figcaption class="mt-2 text-center text-sm text-fg/80">
           {{ current + 1 }} / {{ shown.length }}
         </figcaption>
 
         <button
           type="button"
-          class="absolute top-2 right-4 sm:right-16 w-10 h-10 rounded-full bg-white/15 hover:bg-white/30 text-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+          class="absolute top-2 right-4 sm:right-16 w-10 h-10 rounded-full bg-white/15 hover:bg-white/30 text-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           aria-label="Close"
           @click="close"
         >
@@ -119,7 +119,7 @@ watch(
         <template v-if="shown.length > 1">
           <button
             type="button"
-            class="absolute left-3 sm:left-0 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/15 hover:bg-white/30 text-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+            class="absolute left-3 sm:left-0 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/15 hover:bg-white/30 text-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             aria-label="Previous screenshot"
             @click="move(-1)"
           >
@@ -127,7 +127,7 @@ watch(
           </button>
           <button
             type="button"
-            class="absolute right-3 sm:right-0 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/15 hover:bg-white/30 text-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+            class="absolute right-3 sm:right-0 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/15 hover:bg-white/30 text-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             aria-label="Next screenshot"
             @click="move(1)"
           >

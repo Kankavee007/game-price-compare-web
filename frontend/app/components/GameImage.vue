@@ -32,7 +32,7 @@ function onCoverError() {
 </script>
 
 <template>
-  <div class="relative overflow-hidden bg-gray-700">
+  <div class="relative overflow-hidden bg-surface-2">
     <img
       v-if="stage === 'cover'"
       :src="cover!"
@@ -63,7 +63,7 @@ function onCoverError() {
       v-else
       role="img"
       :aria-label="alt"
-      class="absolute inset-0 flex flex-col items-center justify-center gap-2 p-3 text-center text-gray-400"
+      class="absolute inset-0 flex flex-col items-center justify-center gap-2 p-3 text-center text-muted"
     >
       <span class="text-3xl" aria-hidden="true">🎮</span>
       <span class="text-xs leading-snug line-clamp-3" aria-hidden="true">{{ alt }}</span>
