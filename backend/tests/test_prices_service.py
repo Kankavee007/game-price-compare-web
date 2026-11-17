@@ -6,7 +6,7 @@ from game_api.services.prices import get_prices
 
 GAMES = {
     "82": {
-        "info": {"title": "Portal", "thumb": "p.jpg"},
+        "info": {"title": "Portal", "steamAppID": "400", "thumb": "p.jpg"},
         "cheapestPriceEver": {"price": "0.99", "date": 1498153168},
         "deals": [
             {"storeID": "1", "dealID": "a", "price": "9.99", "retailPrice": "9.99", "savings": "0"},
@@ -42,6 +42,7 @@ def test_cheapest_deal_per_game_converted(lookups):
             "gameID": "82",
             "name": "Portal",
             "thumb": "p.jpg",
+            "cover": "https://shared.steamstatic.com/store_item_assets/steam/apps/400/library_600x900.jpg",
             "price": 174.65,
             "retailPrice": 349.65,
             "savings": 50,
@@ -90,3 +91,7 @@ def test_exactly_50_ids_are_fine(lookups):
 def test_unknown_currency_raises(lookups):
     with pytest.raises(InvalidCurrencyError):
         get_prices("82", "XYZ")
+
+
+def test_cover_is_null_without_steam_app_id(lookups):
+    assert get_prices("99", "USD")[0]["cover"] is None

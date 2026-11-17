@@ -14,7 +14,7 @@ frontend/
     app.vue               # root: <NuxtLayout> + <NuxtPage>, title template
     layouts/default.vue   # header + nav shared by every page
     pages/                # file = route (index.vue -> /, about.vue -> /about, wishlist.vue -> /wishlist, alerts.vue -> /alerts, browse.vue -> /browse?genre=<id>, games/[id].vue -> /games/<id>)
-    components/           # GameCard, CurrencySelect, SearchFilters, GameSection, DiscountSidebar, LowestBadge, WishlistHeart, WishlistSaleNotice, RecentlyViewed, PriceAlertForm, QuickSearch (auto-imported)
+    components/           # GameCard, CurrencySelect, SearchFilters, GameSection, DiscountSidebar, LowestBadge, WishlistHeart, WishlistSaleNotice, RecentlyViewed, PriceAlertForm, QuickSearch, GameImage (portrait cover with landscape fallback), ScreenshotGallery (auto-imported)
     composables/          # useWishlist, useRecentlyViewed (localStorage, synced across tabs), storedList helper
     utils/                # auto-imported
       apiGet.ts           #   apiGet / apiPost: fetch /api/* with abort + 30 s timeout, ApiError(status)
@@ -56,7 +56,8 @@ backend/
       prices.py           #   get_prices(): cheapest deal per game for many ids
       alerts.py           #   set_alert(), manage_alerts(): validate, convert price to USD, per IP per hour: 10 alerts, 5 manage emails (in memory)
       browse.py           #   get_genres(), browse(): IGDB popular PC games + CheapShark price by Steam app id (4 lookups at a time)
-      game_detail.py      #   get_game_detail(): CheapShark deals + IGDB info (and similar games), sorted cheapest first
+      game_detail.py      #   get_game_detail(): CheapShark deals + IGDB info (similar games, screenshots), sorted cheapest first
+      steam.py            #   steam_cover_url(): portrait Steam cover (library_600x900) from a Steam app id, no API call
       cheapshark.py       #   CheapShark API (search, one game, many games, /deals cached 15 min, store list cached 1 day, price alerts)
       igdb.py             #   IGDB API (Twitch app token cached in memory, match by Steam id then title, genres, popular games)
       exchange.py         #   USD exchange rates (cached 30 min, stale on error)

@@ -87,7 +87,7 @@ def find_game(steam_app_id: str | None, title: str | None):
     fields = (
         "name, genres.name, rating, rating_count, first_release_date, "
         "aggregated_rating, cover.image_id, summary, game_type, "
-        "similar_games.name, similar_games.cover.image_id"
+        "similar_games.name, similar_games.cover.image_id, screenshots.image_id"
     )
 
     # search by steam_app_id first

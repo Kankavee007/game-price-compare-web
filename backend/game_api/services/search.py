@@ -1,6 +1,7 @@
 from ..errors import InvalidCurrencyError
 from . import cheapshark, exchange
 from .lowest import lowest_price_fields
+from .steam import steam_cover_url
 
 
 def search_prices(query, currency):
@@ -35,6 +36,7 @@ def search_prices(query, currency):
             "price": round(float(game["cheapest"]) * rate, 2),
             "currency": currency,
             "thumb": game["thumb"],
+            "cover": steam_cover_url(game.get("steamAppID")),
             "storeID": store_id,
             "storeName": store_names.get(store_id) if store_id else None,
             "dealUrl": f"https://www.cheapshark.com/redirect?dealID={deal_id}",

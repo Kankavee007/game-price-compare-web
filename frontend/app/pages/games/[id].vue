@@ -36,7 +36,8 @@ async function load() {
     recent.record({
       gameID: id.value,
       name: game.value.name,
-      thumb: game.value.thumb ?? game.value.cover,
+      thumb: game.value.thumb,
+      cover: game.value.cover,
     })
   } catch (err) {
     if (signal.aborted) return
@@ -137,7 +138,12 @@ function formatDate(isoDate: string) {
               type="button"
               class="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-500 font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
               @click="
-                wishlist.add({ gameID: game.id, name: game.name, thumb: game.thumb ?? game.cover })
+                wishlist.add({
+                  gameID: game.id,
+                  name: game.name,
+                  thumb: game.thumb,
+                  cover: game.cover,
+                })
               "
             >
               ♡ Add to wishlist
@@ -184,6 +190,9 @@ function formatDate(isoDate: string) {
           <p v-if="game.summary" class="text-gray-300 leading-relaxed">{{ game.summary }}</p>
         </div>
       </section>
+
+      <!-- IGDB screenshots. Hidden when there are none or IGDB failed -->
+      <ScreenshotGallery :screenshots="game.screenshots" :game-name="game.name" />
 
       <section class="space-y-4">
         <div class="flex flex-wrap items-center justify-between gap-4">

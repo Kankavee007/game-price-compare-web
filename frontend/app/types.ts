@@ -11,7 +11,8 @@ export interface Game extends LowestPrice {
   name: string
   price: number
   currency: string
-  thumb: string
+  thumb: string // small landscape image (CheapShark)
+  cover: string | null // portrait Steam cover, may 404 for new games; null when not on Steam
   storeID: string | null
   storeName: string | null
   dealUrl: string
@@ -54,6 +55,12 @@ export interface SimilarGame {
   cover: string | null
 }
 
+/** IGDB screenshot: thumb is 889x500 for the strip, full is up to 1920x1080 */
+export interface Screenshot {
+  thumb: string
+  full: string
+}
+
 export interface GameDetail extends LowestPrice {
   id: string
   name: string
@@ -66,6 +73,7 @@ export interface GameDetail extends LowestPrice {
   summary: string | null
   releaseDate: string | null // YYYY-MM-DD
   similarGames: SimilarGame[] // from IGDB, up to 6; [] when none or IGDB failed
+  screenshots: Screenshot[] // from IGDB, up to 12; [] when none or IGDB failed
   genreTags: Genre[] // same as genres, with the IGDB id for /browse?genre=<id>
   currency: Currency
   deals: Deal[] // cheapest first
@@ -121,6 +129,7 @@ export interface WishlistItem {
   gameID: string
   name: string
   thumb: string | null
+  cover?: string | null // portrait picture; missing in entries saved before it existed
   addedAt: string // ISO date-time
 }
 
@@ -129,6 +138,7 @@ export interface RecentGame {
   gameID: string
   name: string
   thumb: string | null
+  cover?: string | null // portrait picture; missing in entries saved before it existed
 }
 
 // Response shape of GET /api/prices (see backend/game_api/services/prices.py)
@@ -136,6 +146,7 @@ export interface GamePrice extends LowestPrice {
   gameID: string
   name: string | null
   thumb: string | null
+  cover: string | null // portrait Steam cover, null when not on Steam
   price: number
   retailPrice: number
   savings: number // percent, 0-100

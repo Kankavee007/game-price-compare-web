@@ -6,6 +6,7 @@ from .. import config
 from ..errors import InvalidCurrencyError, InvalidParamError, UpstreamError
 from . import cheapshark, exchange
 from .lowest import lowest_price_fields
+from .steam import steam_cover_url
 
 log = logging.getLogger(__name__)
 
@@ -159,6 +160,7 @@ def _relevance(query, f, rate, currency):
             **lowest_price_fields(detail.get("cheapestPriceEver"), best_usd, rate),
             "currency": currency,
             "thumb": game["thumb"],
+            "cover": steam_cover_url(game.get("steamAppID")),
             "steamRating": _steam_rating(rating_row),
             "metacriticScore": _positive_int(rating_row.get("metacriticScore")),
             "releaseDate": _to_date(rating_row.get("releaseDate")),
@@ -176,6 +178,7 @@ def _from_deal_row(row, rate, currency, store_names):
         "savings": round(float(row["savings"])),
         "currency": currency,
         "thumb": row.get("thumb"),
+        "cover": steam_cover_url(row.get("steamAppID")),
         "storeID": store_id,
         "storeName": store_names.get(store_id),
         "dealUrl": f"https://www.cheapshark.com/redirect?dealID={row['dealID']}",

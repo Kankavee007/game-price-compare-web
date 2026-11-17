@@ -96,6 +96,7 @@ def test_result_shape_and_conversion(deals_api):
             "savings": 50,
             "currency": "THB",
             "thumb": "https://example.com/1.jpg",
+            "cover": None,
             "storeID": "1",
             "storeName": "Steam",
             "dealUrl": "https://www.cheapshark.com/redirect?dealID=deal-1-1",
@@ -107,6 +108,14 @@ def test_result_shape_and_conversion(deals_api):
             "isHistoricalLow": False,
         }
     ]
+
+
+def test_deal_row_with_steam_app_id_gets_portrait_cover(deals_api):
+    deals_api.rows = [row("1", "10.00", steamAppID="220")]
+    result = find_deals("", "USD", {})["results"][0]
+
+    assert result["cover"] == "https://shared.steamstatic.com/store_item_assets/steam/apps/220/library_600x900.jpg"
+    assert result["thumb"] == "https://example.com/1.jpg"
 
 
 def test_missing_ratings_and_date_become_null(deals_api):
@@ -229,7 +238,7 @@ def test_lowest_price_lookup_failure_still_returns_deals(deals_api, monkeypatch,
 # --- sort=relevance (title search) ---------------------------------------------------------
 
 SEARCH = [
-    {"gameID": "82", "external": "Portal", "thumb": "p.jpg"},
+    {"gameID": "82", "external": "Portal", "steamAppID": "400", "thumb": "p.jpg"},
     {"gameID": "99", "external": "Portal 2", "thumb": "p2.jpg"},
 ]
 GAMES = {
@@ -263,6 +272,8 @@ def test_relevance_is_default_with_query_and_keeps_search_order(title_search):
     assert first["retailPrice"] == 9.99
     assert first["savings"] == 50
     assert first["steamRating"] is None
+    assert first["cover"] == "https://shared.steamstatic.com/store_item_assets/steam/apps/400/library_600x900.jpg"
+    assert body["results"][1]["cover"] is None
 
 
 def test_relevance_store_filter_picks_cheapest_allowed_store(title_search):
