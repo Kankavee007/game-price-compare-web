@@ -24,8 +24,56 @@
     --c-danger-strong: 225 29 72;
   }
 
+  /* Lime: charcoal with lime accent and teal highlight */
+  :root[data-theme='lime'] {
+    --c-bg: 12 13 12;
+    --c-surface: 24 26 24;
+    --c-surface-2: 36 39 36;
+    --c-line: 52 56 50;
+    --c-line-strong: 76 82 72;
+    --c-fg: 240 244 236;
+    --c-muted: 170 178 165;
+    --c-subtle: 140 148 135;
+    --c-accent: 163 230 53;
+    --c-accent-strong: 77 124 15;
+    --c-accent-2: 45 212 191;
+    --c-success: 74 222 128;
+    --c-warn: 250 204 21;
+    --c-danger: 248 113 113;
+    --c-danger-strong: 220 38 38;
+  }
+
+  /* Ember: warm dark brown with coral accent and amber highlight */
+  :root[data-theme='ember'] {
+    --c-bg: 20 14 12;
+    --c-surface: 34 25 22;
+    --c-surface-2: 48 36 32;
+    --c-line: 70 52 46;
+    --c-line-strong: 98 74 64;
+    --c-fg: 250 240 235;
+    --c-muted: 205 180 170;
+    --c-subtle: 170 145 135;
+    --c-accent: 251 146 120;
+    --c-accent-strong: 194 65 45;
+    --c-accent-2: 251 191 36;
+    --c-success: 52 211 153;
+    --c-warn: 251 191 36;
+    --c-danger: 248 113 113;
+    --c-danger-strong: 220 38 38;
+  }
+
   html {
     @apply bg-bg text-fg font-sans antialiased;
+  }
+
+  /* Set for a moment by useTheme while the preset changes, so colors blend instead of jumping */
+  html.theme-switching,
+  html.theme-switching * {
+    transition:
+      background-color 0.35s ease,
+      border-color 0.35s ease,
+      color 0.35s ease,
+      fill 0.35s ease !important;
   }
 
   /* Soft glows behind the page; fixed so they stay put while scrolling */

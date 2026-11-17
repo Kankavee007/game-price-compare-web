@@ -1046,7 +1046,7 @@
         "cd frontend && npm run type-check && npm run lint pass",
         "Walk through every workflow in the browser, including blocked storage"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "stores-01",

@@ -36,6 +36,14 @@ export default defineNuxtConfig({
     pageTransition: { name: 'page', mode: 'out-in' },
     head: {
       title: 'Game Price Compare',
+      // Apply the saved color preset before the first paint, so there is no flash of the
+      // default colors. Keep the names in sync with THEMES in composables/useTheme.ts.
+      script: [
+        {
+          innerHTML:
+            "try{var t=localStorage.getItem('theme');if(t==='lime'||t==='ember')document.documentElement.dataset.theme=t}catch(e){}",
+        },
+      ],
       link: [
         { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
         // Theme fonts; display=swap shows the system font until they load (or if they fail)
