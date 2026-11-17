@@ -1161,7 +1161,7 @@
         "cd frontend && npm run type-check && npm run lint pass",
         "Walk through every workflow in the browser with mouse and keyboard at phone and desktop widths"
       ],
-      "passes": false
+      "passes": true
     }
   ]
 }

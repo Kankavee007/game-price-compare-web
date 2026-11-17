@@ -18,7 +18,17 @@ const defaultSort = computed(() => (props.hasQuery ? 'relevance' : 'deal'))
 const sortChoices = computed(() =>
   SORT_OPTIONS.filter((o) => o.key !== 'relevance' && o.key !== defaultSort.value),
 )
-const sortValue = computed(() => {
+// Options for the dropdowns; '' is the default choice (no filter / API default sort)
+const sortPickOptions = computed(() => [
+  { value: '', label: props.hasQuery ? 'Best match' : 'Best deals' },
+  ...sortChoices.value.map((o) => ({ value: o.key as string, label: o.label })),
+])
+const ratingPickOptions = [
+  { value: '', label: 'Any' },
+  ...RATINGS.map((r) => ({ value: String(r), label: `${r}%+` })),
+]
+
+const sortValue = computed<string>(() => {
   const sort = filters.value.sort
   return !sort || sort === defaultSort.value || sort === 'relevance' ? '' : sort
 })
@@ -133,37 +143,27 @@ function reset() {
           />
         </fieldset>
 
-        <label class="flex flex-col text-sm text-muted">
-          Sort by
-          <select
-            :value="sortValue"
-            class="field mt-1 p-2"
-            @change="
-              update({
-                sort: (($event.target as HTMLSelectElement).value || null) as DealFilters['sort'],
-              })
-            "
-          >
-            <option value="">{{ hasQuery ? 'Best match' : 'Best deals' }}</option>
-            <option v-for="o in sortChoices" :key="o.key" :value="o.key">{{ o.label }}</option>
-          </select>
-        </label>
+        <div class="flex flex-col text-sm text-muted">
+          <span aria-hidden="true">Sort by</span>
+          <PickSelect
+            class="mt-1"
+            label="Sort by"
+            :model-value="sortValue"
+            :options="sortPickOptions"
+            @update:model-value="update({ sort: ($event || null) as DealFilters['sort'] })"
+          />
+        </div>
 
-        <label class="flex flex-col text-sm text-muted">
-          Steam rating
-          <select
-            :value="filters.minRating ?? ''"
-            class="field mt-1 p-2"
-            @change="
-              update({
-                minRating: toNumber(($event.target as HTMLSelectElement).value),
-              })
-            "
-          >
-            <option value="">Any</option>
-            <option v-for="r in RATINGS" :key="r" :value="r">{{ r }}%+</option>
-          </select>
-        </label>
+        <div class="flex flex-col text-sm text-muted">
+          <span aria-hidden="true">Steam rating</span>
+          <PickSelect
+            class="mt-1"
+            label="Steam rating"
+            :model-value="filters.minRating === null ? '' : String(filters.minRating)"
+            :options="ratingPickOptions"
+            @update:model-value="update({ minRating: toNumber($event) })"
+          />
+        </div>
 
         <div class="flex flex-col text-sm text-muted">
           <span aria-hidden="true">Stores</span>

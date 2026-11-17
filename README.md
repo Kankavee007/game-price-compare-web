@@ -18,7 +18,7 @@ frontend/
     assets/css/main.css   # theme: color variables per preset (:root = Nebula, [data-theme=lime|ember]), .panel / .field / .btn-* / .nav-link classes
     layouts/default.vue   # sticky header: nav + site-wide currency select (?currency= in the URL)
     pages/                # file = route (index.vue -> /, about.vue -> /about, wishlist.vue -> /wishlist, alerts.vue -> /alerts, browse.vue -> /browse?genre=<id>, games/[id].vue -> /games/<id>)
-    components/           # GameCard, CurrencySelect, SearchFilters, BrandLogo (full PixSales logo for large areas), StoreSelect (store filter dropdown), ThemeSwitcher (color preset menu), GameSection, DiscountSidebar, LowestBadge, WishlistHeart, WishlistSaleNotice, RecentlyViewed, PriceAlertForm, QuickSearch, GameImage (portrait cover with landscape fallback), ScreenshotGallery (auto-imported)
+    components/           # GameCard, CurrencySelect, SearchFilters, BrandLogo (full PixSales logo for large areas), StoreSelect (store filter dropdown), PickSelect (single-choice dropdown used for sort, rating and currency), ThemeSwitcher (color preset menu), GameSection, DiscountSidebar, LowestBadge, WishlistHeart, WishlistSaleNotice, RecentlyViewed, PriceAlertForm, QuickSearch, GameImage (portrait cover with landscape fallback), ScreenshotGallery (auto-imported)
     plugins/reveal.ts     # v-reveal directive: fade/rise in on first scroll into view (off with reduced motion)
     composables/          # useWishlist, useRecentlyViewed (localStorage, synced across tabs), storedList helper, useTheme (Nebula / Lime / Ember presets, saved in localStorage)
     utils/                # auto-imported
