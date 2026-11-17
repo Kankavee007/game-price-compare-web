@@ -13,7 +13,8 @@
     "Landing page lists (top rated, new, free, biggest discounts) are the same for every visitor: cache raw CheapShark /deals responses in memory for 15 min and send Cache-Control so the Vercel CDN can cache /api responses. In-memory cache is per serverless instance, so it only reduces load, it is not shared.",
     "Wishlist and recently viewed are stored in the browser (localStorage), no accounts. Pages /wishlist and /browse use query strings (/browse?genre=12), not dynamic paths, so they can be prerendered like /about and need no vercel.json change.",
     "Price alerts use CheapShark GET /alerts?action=set&email=&gameID=&price= (price in USD). CheapShark sends the emails, so the user's email address leaves our server; the form must say so. The browser POSTs to Flask so the email is not in our URLs or access logs.",
-    "Alert rate limits per IP per hour (owner's choice, 2026-11-16): set alert 10, manage email 5, counted separately (config.ALERTS_LIMITS). alert-01 says 'e.g. more than 5'; the final value for setting alerts is 10."
+    "Alert rate limits per IP per hour (owner's choice, 2026-11-16): set alert 10, manage email 5, counted separately (config.ALERTS_LIMITS). alert-01 says 'e.g. more than 5'; the final value for setting alerts is 10.",
+    "Phase 10 fixes card images. CheapShark only gives a small landscape 'thumb' (Steam capsule 231x87 or a store image). Portrait art comes from Steam's library_600x900.jpg built from steamAppID (no API call); it returns 404 for some new games (hashed asset paths) and games not on Steam have no steamAppID, so the browser falls back to the landscape thumb, shown whole (object-contain) over a blurred copy instead of cropped. Detail page screenshots come from IGDB (screenshots.image_id, added to the existing find_game query, no extra request): t_screenshot_big (889x500) in the strip, t_1080p in the full view."
   ],
   "features": [
     {
@@ -846,6 +847,84 @@
         "Walk through every workflow in the browser; update the about page"
       ],
       "passes": true
+    },
+    {
+      "id": "media-01",
+      "phase": 10,
+      "category": "functional",
+      "description": "Backend: add a portrait 'cover' URL to search, deals and prices responses",
+      "workflows": {
+        "main": [
+          "/api/search, /api/deals and /api/prices rows with a steamAppID get cover = https://shared.steamstatic.com/store_item_assets/steam/apps/<steamAppID>/library_600x900.jpg"
+        ],
+        "alternate": [
+          "Row without a steamAppID (store-only game): cover is null, thumb is unchanged"
+        ],
+        "error": [
+          "steamAppID is not a plain number: cover is null (never build a URL from untrusted text)"
+        ]
+      },
+      "steps": [
+        "Add steam_cover_url(steam_app_id) helper (config holds the URL template) and use it in services/search.py, deals.py, prices.py",
+        "Add tests for the helper and the new field in each response; cd backend && pytest stays green",
+        "Add cover to Game and price types in types.ts; update README"
+      ],
+      "passes": false
+    },
+    {
+      "id": "media-02",
+      "phase": 10,
+      "category": "functional",
+      "description": "Game cards show portrait art that fits the card instead of a cropped landscape thumb",
+      "workflows": {
+        "main": [
+          "User searches 'hades'; GameCard shows the full portrait Steam cover (3:4 card), title and price on hover as before",
+          "Landing page sections and Recently viewed use the same portrait cards"
+        ],
+        "alternate": [
+          "Game without a cover (not on Steam): landscape thumb is shown whole, centered over a blurred copy of itself, nothing cropped",
+          "Small list rows (quick search, discount sidebar, wishlist rows) keep the landscape thumb, which fits a row"
+        ],
+        "error": [
+          "Cover URL returns 404: image switches to the landscape thumb on load error, no broken-image icon",
+          "Both images fail: gray placeholder with the game name, card still clickable"
+        ]
+      },
+      "steps": [
+        "Add a GameImage component (cover -> thumb fallback on @error -> placeholder) and use it in GameCard and RecentlyViewed",
+        "Store cover in wishlist / recently viewed entries when known; old saved entries without it still render",
+        "cd frontend && npm run type-check && npm run lint pass",
+        "Open the app at phone and desktop widths and walk through every workflow above"
+      ],
+      "passes": false
+    },
+    {
+      "id": "media-03",
+      "phase": 10,
+      "category": "functional",
+      "description": "Detail page shows a screenshot gallery from IGDB",
+      "workflows": {
+        "main": [
+          "User opens /games/<id>; a 'Screenshots' strip shows up to 12 landscape in-game screenshots, scrollable sideways",
+          "Clicking one opens a full-size view with previous/next buttons; arrow keys move, Esc or clicking outside closes it"
+        ],
+        "alternate": [
+          "IGDB match has no screenshots, or no IGDB match: the Screenshots section is hidden, rest of the page unchanged",
+          "Phone width: strip scrolls with touch, full view fits the screen width"
+        ],
+        "error": [
+          "IGDB fails or credentials missing: page loads with prices as today, no Screenshots section",
+          "One screenshot fails to load: that tile is hidden, others still show"
+        ]
+      },
+      "steps": [
+        "Add screenshots.image_id to the IGDB find_game fields; game_detail returns screenshots: [{thumb, full}] (max 12, [] when none)",
+        "Add backend tests with IGDB mocked (with, without, no match); cd backend && pytest stays green",
+        "Add screenshots to GameDetail in types.ts; build the strip + full view in pages/games/[id].vue (keyboard accessible, focus returns on close)",
+        "cd frontend && npm run type-check && npm run lint pass",
+        "Walk through every workflow in the browser; update README and the about page"
+      ],
+      "passes": false
     }
   ]
 }
