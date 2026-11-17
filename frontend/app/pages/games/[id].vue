@@ -197,7 +197,6 @@ function formatDate(isoDate: string) {
       <section class="space-y-4">
         <div class="flex flex-wrap items-center justify-between gap-4">
           <h2 class="text-xl font-semibold">Prices in every store</h2>
-          <CurrencySelect v-model="currency" />
         </div>
 
         <p

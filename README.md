@@ -12,7 +12,7 @@ frontend/
   nuxt.config.ts          # prerender settings, Tailwind, dev proxy /api -> Flask
   app/
     app.vue               # root: <NuxtLayout> + <NuxtPage>, title template
-    layouts/default.vue   # header + nav shared by every page
+    layouts/default.vue   # sticky header: nav + site-wide currency select (?currency= in the URL)
     pages/                # file = route (index.vue -> /, about.vue -> /about, wishlist.vue -> /wishlist, alerts.vue -> /alerts, browse.vue -> /browse?genre=<id>, games/[id].vue -> /games/<id>)
     components/           # GameCard, CurrencySelect, SearchFilters, GameSection, DiscountSidebar, LowestBadge, WishlistHeart, WishlistSaleNotice, RecentlyViewed, PriceAlertForm, QuickSearch, GameImage (portrait cover with landscape fallback), ScreenshotGallery (auto-imported)
     composables/          # useWishlist, useRecentlyViewed (localStorage, synced across tabs), storedList helper

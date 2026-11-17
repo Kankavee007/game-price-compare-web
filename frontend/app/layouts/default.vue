@@ -1,47 +1,79 @@
 <script setup lang="ts">
+import { toCurrency, type Currency } from '~/types'
+
 const wishlist = useWishlist()
 const route = useRoute()
+const router = useRouter()
+
+// One currency for the whole site, kept in the URL (?currency=THB) so links and reloads keep it.
+// Pages read it from route.query themselves.
+const currency = computed<Currency>({
+  get: () => toCurrency(route.query.currency),
+  set: (value) => router.replace({ query: { ...route.query, currency: value } }),
+})
+
+/** Nav link that keeps the chosen currency (USD is the default, so it is left out) */
+function navTo(path: string) {
+  return currency.value === 'USD' ? path : { path, query: { currency: currency.value } }
+}
 </script>
 
 <template>
   <div class="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white">
-    <header class="border-b border-gray-700">
-      <nav class="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-x-4 gap-y-2 p-4">
-        <NuxtLink to="/" class="text-xl font-bold">🎮 Game Price Compare</NuxtLink>
+    <!-- Pinned while scrolling. z-30: above page content and the quick search list's own z-20;
+         the screenshot full view is a modal <dialog> in the top layer, so it stays above this. -->
+    <header class="sticky top-0 z-30 border-b border-gray-700 bg-gray-900/95 backdrop-blur">
+      <nav
+        class="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-x-4 gap-y-2 p-4"
+      >
+        <NuxtLink :to="navTo('/')" class="text-xl font-bold">🎮 Game Price Compare</NuxtLink>
         <!-- The search page has its own search box -->
         <QuickSearch v-if="route.path !== '/'" class="ml-auto" />
-        <ul class="flex items-center gap-4 text-gray-300">
-          <li>
-            <NuxtLink to="/" class="hover:text-white" active-class="text-white font-semibold"
-              >Search</NuxtLink
-            >
-          </li>
-          <li>
-            <NuxtLink to="/browse" class="hover:text-white" active-class="text-white font-semibold"
-              >Browse</NuxtLink
-            >
-          </li>
-          <li>
-            <NuxtLink
-              to="/wishlist"
-              class="hover:text-white"
-              active-class="text-white font-semibold"
-            >
-              Wishlist<ClientOnly
-                ><span
-                  v-if="wishlist.count.value"
-                  class="ml-1 text-xs bg-red-600 text-white rounded-full px-1.5 py-0.5"
-                  >{{ wishlist.count.value }}</span
-                ></ClientOnly
+        <!-- Links and currency share one row, so a phone gets two rows in all -->
+        <div class="flex items-center gap-3 sm:gap-4">
+          <ul class="flex items-center gap-3 sm:gap-4 text-gray-300">
+            <li>
+              <NuxtLink
+                :to="navTo('/')"
+                class="hover:text-white"
+                active-class="text-white font-semibold"
+                >Search</NuxtLink
               >
-            </NuxtLink>
-          </li>
-          <li>
-            <NuxtLink to="/about" class="hover:text-white" active-class="text-white font-semibold"
-              >About</NuxtLink
-            >
-          </li>
-        </ul>
+            </li>
+            <li>
+              <NuxtLink
+                :to="navTo('/browse')"
+                class="hover:text-white"
+                active-class="text-white font-semibold"
+                >Browse</NuxtLink
+              >
+            </li>
+            <li>
+              <NuxtLink
+                :to="navTo('/wishlist')"
+                class="hover:text-white"
+                active-class="text-white font-semibold"
+              >
+                Wishlist<ClientOnly
+                  ><span
+                    v-if="wishlist.count.value"
+                    class="ml-1 text-xs bg-red-600 text-white rounded-full px-1.5 py-0.5"
+                    >{{ wishlist.count.value }}</span
+                  ></ClientOnly
+                >
+              </NuxtLink>
+            </li>
+            <li>
+              <NuxtLink
+                :to="navTo('/about')"
+                class="hover:text-white"
+                active-class="text-white font-semibold"
+                >About</NuxtLink
+              >
+            </li>
+          </ul>
+          <CurrencySelect v-model="currency" compact />
+        </div>
       </nav>
     </header>
 
