@@ -61,21 +61,17 @@ function toNumber(text: string): number | null {
   return Number.isFinite(n) ? n : null
 }
 
-function toggleStore(id: string) {
-  const stores = filters.value.stores.includes(id)
-    ? filters.value.stores.filter((s) => s !== id)
-    : [...filters.value.stores, id]
-  update({ stores })
-}
-
-// Store chips are optional: if the list cannot be loaded they are hidden, other filters still work
+// The store filter is optional: if the list cannot be loaded its button says so and is
+// disabled, the other filters still work
 const stores = ref<Store[]>([])
+const storeStatus = ref<'loading' | 'ready' | 'error'>('loading')
 const controller = new AbortController()
 onMounted(async () => {
   try {
     stores.value = await getStores(controller.signal)
+    storeStatus.value = 'ready'
   } catch {
-    stores.value = []
+    if (!controller.signal.aborted) storeStatus.value = 'error'
   }
 })
 onBeforeUnmount(() => controller.abort())
@@ -86,7 +82,8 @@ function reset() {
 </script>
 
 <template>
-  <section aria-label="Filters" class="mb-8">
+  <!-- relative z-10: the store dropdown opens over the results below -->
+  <section aria-label="Filters" class="relative z-10 mb-8">
     <div class="flex items-center gap-3 md:hidden">
       <button
         type="button"
@@ -168,6 +165,17 @@ function reset() {
           </select>
         </label>
 
+        <div class="flex flex-col text-sm text-muted">
+          <span aria-hidden="true">Stores</span>
+          <StoreSelect
+            class="mt-1"
+            :model-value="filters.stores"
+            :stores="stores"
+            :status="storeStatus"
+            @update:model-value="update({ stores: $event })"
+          />
+        </div>
+
         <label class="flex items-center gap-2 pb-2 cursor-pointer">
           <input
             type="checkbox"
@@ -191,25 +199,6 @@ function reset() {
       <p v-if="rangeError" id="price-error" class="text-sm text-danger" role="alert">
         {{ rangeError }}
       </p>
-
-      <div v-if="stores.length" role="group" aria-label="Stores" class="flex flex-wrap gap-2">
-        <button
-          v-for="s in stores"
-          :key="s.storeID"
-          type="button"
-          :aria-pressed="filters.stores.includes(s.storeID)"
-          class="flex items-center gap-1.5 px-3 py-1 rounded-full border text-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-          :class="
-            filters.stores.includes(s.storeID)
-              ? 'bg-accent-strong border-accent text-white'
-              : 'bg-bg border-line text-fg/80 hover:border-line-strong'
-          "
-          @click="toggleStore(s.storeID)"
-        >
-          <img v-if="s.logo" :src="s.logo" alt="" class="w-4 h-4" loading="lazy" />
-          {{ s.storeName }}
-        </button>
-      </div>
     </div>
   </section>
 </template>

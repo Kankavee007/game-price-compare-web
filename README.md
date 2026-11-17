@@ -16,7 +16,7 @@ frontend/
     assets/css/main.css   # theme: color variables (Nebula preset), .panel / .field / .btn-* / .nav-link classes
     layouts/default.vue   # sticky header: nav + site-wide currency select (?currency= in the URL)
     pages/                # file = route (index.vue -> /, about.vue -> /about, wishlist.vue -> /wishlist, alerts.vue -> /alerts, browse.vue -> /browse?genre=<id>, games/[id].vue -> /games/<id>)
-    components/           # GameCard, CurrencySelect, SearchFilters, GameSection, DiscountSidebar, LowestBadge, WishlistHeart, WishlistSaleNotice, RecentlyViewed, PriceAlertForm, QuickSearch, GameImage (portrait cover with landscape fallback), ScreenshotGallery (auto-imported)
+    components/           # GameCard, CurrencySelect, SearchFilters, StoreSelect (store filter dropdown), GameSection, DiscountSidebar, LowestBadge, WishlistHeart, WishlistSaleNotice, RecentlyViewed, PriceAlertForm, QuickSearch, GameImage (portrait cover with landscape fallback), ScreenshotGallery (auto-imported)
     composables/          # useWishlist, useRecentlyViewed (localStorage, synced across tabs), storedList helper
     utils/                # auto-imported
       apiGet.ts           #   apiGet / apiPost: fetch /api/* with abort + 30 s timeout, ApiError(status)
