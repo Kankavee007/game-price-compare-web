@@ -122,6 +122,7 @@ export interface WishlistItem {
   gameID: string
   name: string
   thumb: string | null
+  cover?: string | null // portrait picture; missing in entries saved before it existed
   addedAt: string // ISO date-time
 }
 
@@ -130,6 +131,7 @@ export interface RecentGame {
   gameID: string
   name: string
   thumb: string | null
+  cover?: string | null // portrait picture; missing in entries saved before it existed
 }
 
 // Response shape of GET /api/prices (see backend/game_api/services/prices.py)

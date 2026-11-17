@@ -16,7 +16,12 @@ defineProps<{ game: Game }>()
       :to="{ path: `/games/${game.gameID}`, query: { currency: game.currency } }"
       class="relative block bg-gray-800 rounded-2xl overflow-hidden shadow-lg group-hover:shadow-blue-500/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
     >
-      <img :src="game.thumb" :alt="game.name" loading="lazy" class="w-full h-60 object-cover" />
+      <GameImage
+        :cover="game.cover"
+        :thumb="game.thumb"
+        :alt="game.name"
+        class="w-full aspect-[3/4]"
+      />
 
       <!-- Store label and "Lowest ever" stacked in the top-left corner (cards are narrow on phones) -->
       <span class="absolute top-2 left-2 flex flex-col items-start gap-1">
@@ -35,7 +40,7 @@ defineProps<{ game: Game }>()
     </NuxtLink>
 
     <WishlistHeart
-      :game="{ gameID: game.gameID, name: game.name, thumb: game.thumb }"
+      :game="{ gameID: game.gameID, name: game.name, thumb: game.thumb, cover: game.cover }"
       class="absolute top-2 right-2"
     />
   </div>

@@ -1,7 +1,9 @@
 <script setup lang="ts">
 // Heart toggle for game cards. It sits next to the card link, not inside it: a button inside
 // an <a> is invalid HTML, and a click on it would also open the game page.
-const props = defineProps<{ game: { gameID: string; name: string; thumb: string | null } }>()
+const props = defineProps<{
+  game: { gameID: string; name: string; thumb: string | null; cover?: string | null }
+}>()
 
 const wishlist = useWishlist()
 const saved = computed(() => wishlist.has(props.game.gameID))

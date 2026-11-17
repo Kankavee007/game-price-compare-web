@@ -896,7 +896,7 @@
         "cd frontend && npm run type-check && npm run lint pass",
         "Open the app at phone and desktop widths and walk through every workflow above"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "media-03",

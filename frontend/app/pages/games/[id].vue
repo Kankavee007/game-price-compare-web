@@ -36,7 +36,8 @@ async function load() {
     recent.record({
       gameID: id.value,
       name: game.value.name,
-      thumb: game.value.thumb ?? game.value.cover,
+      thumb: game.value.thumb,
+      cover: game.value.cover,
     })
   } catch (err) {
     if (signal.aborted) return
@@ -137,7 +138,12 @@ function formatDate(isoDate: string) {
               type="button"
               class="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-500 font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
               @click="
-                wishlist.add({ gameID: game.id, name: game.name, thumb: game.thumb ?? game.cover })
+                wishlist.add({
+                  gameID: game.id,
+                  name: game.name,
+                  thumb: game.thumb,
+                  cover: game.cover,
+                })
               "
             >
               ♡ Add to wishlist

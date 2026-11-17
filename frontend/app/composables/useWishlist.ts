@@ -29,7 +29,12 @@ export function useWishlist() {
       : 'Your wishlist cannot be saved in this browser (storage is blocked or full).'
   }
 
-  function add(game: { gameID: string; name: string; thumb: string | null }) {
+  function add(game: {
+    gameID: string
+    name: string
+    thumb: string | null
+    cover?: string | null
+  }) {
     if (has(game.gameID)) return
     if (items.value.length >= WISHLIST_MAX) {
       error.value = `Your wishlist is full (${WISHLIST_MAX} games). Remove a game to add another.`
@@ -39,6 +44,7 @@ export function useWishlist() {
       gameID: game.gameID,
       name: game.name,
       thumb: game.thumb,
+      cover: game.cover ?? null,
       addedAt: new Date().toISOString(),
     }
     store([item, ...items.value])
@@ -48,7 +54,12 @@ export function useWishlist() {
     store(items.value.filter((i) => i.gameID !== gameID))
   }
 
-  function toggle(game: { gameID: string; name: string; thumb: string | null }) {
+  function toggle(game: {
+    gameID: string
+    name: string
+    thumb: string | null
+    cover?: string | null
+  }) {
     if (has(game.gameID)) remove(game.gameID)
     else add(game)
   }

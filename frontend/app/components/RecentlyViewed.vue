@@ -21,25 +21,23 @@ const query = computed(() => (props.currency !== 'USD' ? { currency: props.curre
     </div>
 
     <ul
-      class="flex gap-4 overflow-x-auto snap-x pb-2 md:grid md:grid-cols-4 md:overflow-visible md:pb-0"
+      class="flex gap-4 overflow-x-auto snap-x pb-2 md:grid md:grid-cols-5 md:overflow-visible md:pb-0"
     >
       <li
         v-for="game in recent.items.value"
         :key="game.gameID"
-        class="w-40 shrink-0 snap-start md:w-auto"
+        class="w-32 shrink-0 snap-start md:w-auto"
       >
         <NuxtLink
           :to="{ path: `/games/${game.gameID}`, query }"
           class="block rounded-xl overflow-hidden bg-gray-800 hover:bg-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
         >
-          <img
-            v-if="game.thumb"
-            :src="game.thumb"
-            alt=""
-            loading="lazy"
-            class="w-full h-20 object-cover bg-gray-700"
+          <GameImage
+            :cover="game.cover"
+            :thumb="game.thumb"
+            :alt="game.name"
+            class="w-full aspect-[3/4]"
           />
-          <div v-else class="w-full h-20 bg-gray-700" />
           <p class="p-2 text-sm font-medium truncate" :title="game.name">{{ game.name }}</p>
         </NuxtLink>
       </li>
