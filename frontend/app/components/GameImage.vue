@@ -20,25 +20,33 @@ function firstStage(): Stage {
 }
 
 const stage = ref<Stage>(firstStage())
+// The picture fades in once it has loaded instead of popping in
+const loaded = ref(false)
 // Same component reused for another game (list re-ordered, new search): start again
 watch(
   () => [props.cover, props.thumb],
-  () => (stage.value = firstStage()),
+  () => {
+    stage.value = firstStage()
+    loaded.value = false
+  },
 )
 
 function onCoverError() {
+  loaded.value = false
   stage.value = props.thumb ? 'thumb' : 'none'
 }
 </script>
 
 <template>
-  <div class="relative overflow-hidden bg-gray-700">
+  <div class="relative overflow-hidden bg-surface-2">
     <img
       v-if="stage === 'cover'"
       :src="cover!"
       :alt="alt"
       loading="lazy"
-      class="absolute inset-0 w-full h-full object-cover"
+      class="absolute inset-0 w-full h-full object-cover transition-opacity duration-500"
+      :class="loaded ? 'opacity-100' : 'opacity-0'"
+      @load="loaded = true"
       @error="onCoverError"
     />
 
@@ -54,7 +62,9 @@ function onCoverError() {
         :src="thumb!"
         :alt="alt"
         loading="lazy"
-        class="absolute inset-0 w-full h-full object-contain"
+        class="absolute inset-0 w-full h-full object-contain transition-opacity duration-500"
+        :class="loaded ? 'opacity-100' : 'opacity-0'"
+        @load="loaded = true"
         @error="stage = 'none'"
       />
     </template>
@@ -63,7 +73,7 @@ function onCoverError() {
       v-else
       role="img"
       :aria-label="alt"
-      class="absolute inset-0 flex flex-col items-center justify-center gap-2 p-3 text-center text-gray-400"
+      class="absolute inset-0 flex flex-col items-center justify-center gap-2 p-3 text-center text-muted"
     >
       <span class="text-3xl" aria-hidden="true">🎮</span>
       <span class="text-xs leading-snug line-clamp-3" aria-hidden="true">{{ alt }}</span>

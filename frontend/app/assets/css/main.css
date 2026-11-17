@@ -1,3 +1,202 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Theme tokens as "R G B" channels (see tailwind.config.js). Nebula is the default preset:
+   ink-navy background, violet accent, cyan second highlight. */
+@layer base {
+  :root {
+    color-scheme: dark;
+    --c-bg: 10 11 24;
+    --c-surface: 21 23 47;
+    --c-surface-2: 31 34 66;
+    --c-line: 44 48 92;
+    --c-line-strong: 66 71 128;
+    --c-fg: 238 239 255;
+    --c-muted: 165 170 210;
+    --c-subtle: 136 142 190;
+    --c-accent: 167 139 250;
+    --c-accent-strong: 124 58 237;
+    --c-accent-2: 34 211 238;
+    --c-success: 52 211 153;
+    --c-warn: 251 191 36;
+    --c-danger: 251 113 133;
+    --c-danger-strong: 225 29 72;
+    --c-brand: 56 238 87;
+  }
+
+  /* Lime: charcoal with lime accent and teal highlight */
+  :root[data-theme='lime'] {
+    --c-bg: 12 13 12;
+    --c-surface: 24 26 24;
+    --c-surface-2: 36 39 36;
+    --c-line: 52 56 50;
+    --c-line-strong: 76 82 72;
+    --c-fg: 240 244 236;
+    --c-muted: 170 178 165;
+    --c-subtle: 140 148 135;
+    --c-accent: 163 230 53;
+    --c-accent-strong: 77 124 15;
+    --c-accent-2: 45 212 191;
+    --c-success: 74 222 128;
+    --c-warn: 250 204 21;
+    --c-danger: 248 113 113;
+    --c-danger-strong: 220 38 38;
+  }
+
+  /* Ember: warm dark brown with coral accent and amber highlight */
+  :root[data-theme='ember'] {
+    --c-bg: 20 14 12;
+    --c-surface: 34 25 22;
+    --c-surface-2: 48 36 32;
+    --c-line: 70 52 46;
+    --c-line-strong: 98 74 64;
+    --c-fg: 250 240 235;
+    --c-muted: 205 180 170;
+    --c-subtle: 170 145 135;
+    --c-accent: 251 146 120;
+    --c-accent-strong: 194 65 45;
+    --c-accent-2: 251 191 36;
+    --c-success: 52 211 153;
+    --c-warn: 251 191 36;
+    --c-danger: 248 113 113;
+    --c-danger-strong: 220 38 38;
+  }
+
+  html {
+    @apply bg-bg text-fg font-sans antialiased;
+  }
+
+  /* Set for a moment by useTheme while the preset changes, so colors blend instead of jumping */
+  html.theme-switching,
+  html.theme-switching * {
+    transition:
+      background-color 0.35s ease,
+      border-color 0.35s ease,
+      color 0.35s ease,
+      fill 0.35s ease !important;
+  }
+
+  /* Soft glows behind the page; fixed so they stay put while scrolling */
+  body {
+    background:
+      radial-gradient(60rem 40rem at 10% -10%, rgb(var(--c-accent-strong) / 0.18), transparent 60%),
+      radial-gradient(50rem 35rem at 100% 0%, rgb(var(--c-accent-2) / 0.1), transparent 60%),
+      rgb(var(--c-bg));
+    background-attachment: fixed;
+  }
+
+  h1,
+  h2,
+  h3 {
+    @apply font-display tracking-tight;
+  }
+
+  ::selection {
+    background: rgb(var(--c-accent) / 0.35);
+  }
+}
+
+@layer components {
+  /* Glassy panel used for cards, filter boxes and sections */
+  .panel {
+    @apply bg-surface/70 border border-line rounded-2xl backdrop-blur-sm;
+  }
+
+  /* Text field and select look */
+  .field {
+    @apply bg-surface-2/70 border border-line rounded-xl text-fg placeholder:text-subtle
+      transition-colors hover:border-line-strong
+      focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent;
+  }
+
+  /* Filled main action */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 font-semibold text-white
+      bg-gradient-to-r from-accent-strong to-accent-strong/80 shadow-glow
+      transition hover:brightness-110 active:scale-[0.98]
+      focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-2 focus-visible:ring-offset-2 focus-visible:ring-offset-bg
+      disabled:opacity-50 disabled:pointer-events-none;
+  }
+
+  /* Outlined secondary action */
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 font-medium text-fg
+      border border-line bg-surface/60 transition hover:border-accent hover:text-accent
+      focus:outline-none focus-visible:ring-2 focus-visible:ring-accent
+      disabled:opacity-50 disabled:pointer-events-none;
+  }
+
+  /* Top bar links: pill on hover, filled pill for the current page */
+  .nav-link {
+    @apply px-1.5 py-1.5 text-sm sm:px-2.5 sm:text-base rounded-lg transition-colors hover:text-fg hover:bg-surface-2/70
+      focus:outline-none focus-visible:ring-2 focus-visible:ring-accent;
+  }
+  .nav-link-active {
+    @apply text-fg bg-accent/15 font-semibold;
+  }
+}
+
+/* Loading placeholder with a soft light sweeping across */
+@layer components {
+  .skeleton {
+    @apply relative overflow-hidden bg-surface rounded-2xl;
+  }
+  .skeleton::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(90deg, transparent, rgb(var(--c-fg) / 0.06), transparent);
+    animation: shimmer 1.4s ease-in-out infinite;
+  }
+}
+
+@keyframes shimmer {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+/* Page change (nuxt.config pageTransition: name "page", out-in) */
+.page-enter-active,
+.page-leave-active {
+  transition:
+    opacity 0.22s ease,
+    transform 0.22s ease;
+}
+.page-enter-from {
+  opacity: 0;
+  transform: translateY(8px);
+}
+.page-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+
+/* v-reveal (plugins/reveal.ts) */
+.reveal {
+  opacity: 0;
+  transform: translateY(14px);
+  transition:
+    opacity 0.5s ease,
+    transform 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+.reveal.reveal-in {
+  opacity: 1;
+  transform: none;
+}
+
+/* OS "reduce motion": no slides, shimmer or stagger; content just appears */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+    scroll-behavior: auto !important;
+  }
+}

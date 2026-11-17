@@ -1,4 +1,6 @@
-# game-price-compare-web
+# PixSales - Pixel Perfect Deals
+
+Repo: `game-price-compare-web`. Logo artwork: `pictures/pixsales.png` (generated web versions in `frontend/public/brand/`).
 
 My first web project by myself
 
@@ -9,13 +11,16 @@ My first web project by myself
 
 ```
 frontend/
-  nuxt.config.ts          # prerender settings, Tailwind, dev proxy /api -> Flask
+  nuxt.config.ts          # prerender settings, Tailwind, Google Fonts (Inter, Space Grotesk), dev proxy /api -> Flask
+  tailwind.config.js      # theme colors as tokens (bg-surface, text-accent...) read from CSS variables
   app/
     app.vue               # root: <NuxtLayout> + <NuxtPage>, title template
+    assets/css/main.css   # theme: color variables per preset (:root = Nebula, [data-theme=lime|ember]), .panel / .field / .btn-* / .nav-link classes
     layouts/default.vue   # sticky header: nav + site-wide currency select (?currency= in the URL)
     pages/                # file = route (index.vue -> /, about.vue -> /about, wishlist.vue -> /wishlist, alerts.vue -> /alerts, browse.vue -> /browse?genre=<id>, games/[id].vue -> /games/<id>)
-    components/           # GameCard, CurrencySelect, SearchFilters, GameSection, DiscountSidebar, LowestBadge, WishlistHeart, WishlistSaleNotice, RecentlyViewed, PriceAlertForm, QuickSearch, GameImage (portrait cover with landscape fallback), ScreenshotGallery (auto-imported)
-    composables/          # useWishlist, useRecentlyViewed (localStorage, synced across tabs), storedList helper
+    components/           # GameCard, CurrencySelect, SearchFilters, BrandLogo (full PixSales logo for large areas), StoreSelect (store filter dropdown), PickSelect (single-choice dropdown used for sort, rating and currency), ThemeSwitcher (color preset menu), GameSection, DiscountSidebar, LowestBadge, WishlistHeart, WishlistSaleNotice, RecentlyViewed, PriceAlertForm, QuickSearch, GameImage (portrait cover with landscape fallback), ScreenshotGallery (auto-imported)
+    plugins/reveal.ts     # v-reveal directive: fade/rise in on first scroll into view (off with reduced motion)
+    composables/          # useWishlist, useRecentlyViewed (localStorage, synced across tabs), storedList helper, useTheme (Nebula / Lime / Ember presets, saved in localStorage)
     utils/                # auto-imported
       apiGet.ts           #   apiGet / apiPost: fetch /api/* with abort + 30 s timeout, ApiError(status)
       searchGames.ts      #   GET /api/search

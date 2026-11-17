@@ -86,20 +86,22 @@ useHead({ title: 'Wishlist' })
 
     <ClientOnly>
       <template #fallback>
-        <p class="text-gray-400" role="status">Loading your wishlist…</p>
+        <ul class="space-y-3" role="status" aria-label="Loading your wishlist">
+          <li v-for="n in 3" :key="n" class="skeleton h-20" />
+        </ul>
       </template>
 
       <div
         v-if="wishlist.count.value === 0"
-        class="text-center py-16 space-y-3 border border-dashed border-gray-700 rounded-2xl"
+        class="text-center py-16 space-y-3 border border-dashed border-line rounded-2xl"
       >
         <p class="text-xl font-semibold">Your wishlist is empty</p>
-        <p class="text-gray-400">Tap ♡ on any game to save it here and keep an eye on its price.</p>
-        <NuxtLink to="/" class="inline-block text-blue-400 hover:underline">Find games →</NuxtLink>
+        <p class="text-muted">Tap ♡ on any game to save it here and keep an eye on its price.</p>
+        <NuxtLink to="/" class="inline-block text-accent hover:underline">Find games →</NuxtLink>
       </div>
 
       <template v-else>
-        <p class="text-gray-400">
+        <p class="text-muted">
           {{ wishlist.count.value }} {{ wishlist.count.value === 1 ? 'game' : 'games' }}
           <template v-if="onSaleCount">· {{ onSaleCount }} on sale</template>
           · saved in this browser only
@@ -107,13 +109,13 @@ useHead({ title: 'Wishlist' })
 
         <div
           v-if="error"
-          class="flex flex-wrap items-center gap-4 p-4 rounded-xl border border-red-500/40 bg-red-500/5"
+          class="flex flex-wrap items-center gap-4 p-4 rounded-2xl border border-danger/40 bg-danger/10"
           role="alert"
         >
-          <p class="text-red-300">⚠️ Prices unavailable: {{ error }}</p>
+          <p class="text-danger">⚠️ Prices unavailable: {{ error }}</p>
           <button
             type="button"
-            class="px-4 py-2 rounded-lg border border-red-500 text-red-200 hover:bg-red-500/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+            class="btn-ghost border-danger/60 hover:border-danger hover:text-danger"
             @click="load"
           >
             Try again
@@ -124,21 +126,22 @@ useHead({ title: 'Wishlist' })
           <li
             v-for="{ item, price } in rows"
             :key="item.gameID"
-            class="flex flex-wrap sm:flex-nowrap items-center gap-4 p-3 rounded-xl bg-gray-800 border"
-            :class="price && price.savings > 0 ? 'border-green-600/60' : 'border-gray-700'"
+            v-reveal
+            class="panel flex flex-wrap sm:flex-nowrap items-center gap-4 p-3"
+            :class="price && price.savings > 0 ? 'border-success/50' : 'border-line'"
           >
             <NuxtLink
               :to="{ path: `/games/${item.gameID}`, query: { currency } }"
-              class="flex items-center gap-4 min-w-0 flex-1 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+              class="flex items-center gap-4 min-w-0 flex-1 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
               <img
                 v-if="item.thumb ?? price?.thumb"
                 :src="(item.thumb ?? price?.thumb)!"
                 alt=""
                 loading="lazy"
-                class="w-24 h-12 object-cover rounded-md shrink-0 bg-gray-700"
+                class="w-24 h-12 object-cover rounded-md shrink-0 bg-surface-2"
               />
-              <div v-else class="w-24 h-12 rounded-md shrink-0 bg-gray-700" />
+              <div v-else class="w-24 h-12 rounded-md shrink-0 bg-surface-2" />
               <span class="font-semibold truncate">{{ item.name }}</span>
             </NuxtLink>
 
@@ -146,31 +149,31 @@ useHead({ title: 'Wishlist' })
               <template v-if="price">
                 <div class="text-right">
                   <p class="flex flex-wrap justify-end items-baseline gap-x-2">
-                    <span v-if="price.savings > 0" class="text-sm text-green-400"
+                    <span v-if="price.savings > 0" class="text-sm text-success"
                       >-{{ price.savings }}%</span
                     >
-                    <s v-if="price.retailPrice > price.price" class="text-sm text-gray-500">{{
+                    <s v-if="price.retailPrice > price.price" class="text-sm text-subtle">{{
                       formatPrice(price.retailPrice)
                     }}</s>
-                    <span class="text-lg font-bold text-green-400">{{
+                    <span class="text-lg font-bold text-success">{{
                       formatPrice(price.price)
                     }}</span>
                   </p>
-                  <p class="flex justify-end items-center gap-2 text-xs text-gray-400">
+                  <p class="flex justify-end items-center gap-2 text-xs text-muted">
                     <LowestBadge v-if="price.isHistoricalLow" />
                     {{ price.storeName ?? 'Unknown store' }}
                   </p>
                 </div>
               </template>
-              <span v-else-if="loading" class="text-gray-400 text-sm" role="status"
+              <span v-else-if="loading" class="text-muted text-sm" role="status"
                 >Loading price…</span
               >
-              <span v-else-if="error" class="text-gray-400 text-sm">Price unavailable</span>
-              <span v-else class="text-amber-300 text-sm">No longer listed</span>
+              <span v-else-if="error" class="text-muted text-sm">Price unavailable</span>
+              <span v-else class="text-warn text-sm">No longer listed</span>
 
               <button
                 type="button"
-                class="px-3 py-1.5 rounded-lg border border-gray-600 text-sm hover:bg-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                class="btn-ghost px-3 py-1.5 text-sm"
                 :aria-label="`Remove ${item.name} from wishlist`"
                 @click="wishlist.remove(item.gameID)"
               >

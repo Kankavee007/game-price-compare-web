@@ -35,12 +35,12 @@ watch(() => wishlist.items.value.map((i) => i.gameID).join(','), load)
   <NuxtLink
     v-if="onSale > 0"
     to="/wishlist"
-    class="flex items-center justify-between gap-4 mb-8 p-4 rounded-xl border border-red-500/50 bg-red-500/10 hover:bg-red-500/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+    class="flex items-center justify-between gap-4 mb-8 p-4 rounded-xl border border-danger/50 bg-danger/10 hover:bg-danger/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
   >
     <span>
-      <span class="text-red-400" aria-hidden="true">♥</span>
+      <span class="text-danger" aria-hidden="true">♥</span>
       Your wishlist: <strong>{{ onSale }} {{ onSale === 1 ? 'game' : 'games' }} on sale</strong>
     </span>
-    <span class="text-blue-300 shrink-0">See wishlist →</span>
+    <span class="text-accent-2 shrink-0">See wishlist →</span>
   </NuxtLink>
 </template>

@@ -202,13 +202,26 @@ onBeforeUnmount(() => {
   moreController?.abort()
 })
 
-// app.vue adds " - Game Price Compare"; an empty title shows the site name only
+// app.vue adds " - PixSales"; an empty title shows "PixSales - Pixel Perfect Deals"
 useHead({ title: () => query.value.trim() })
 </script>
 
 <template>
   <div>
-    <h1 class="sr-only">Search game prices</h1>
+    <h1 class="sr-only">PixSales: search game prices</h1>
+
+    <!-- Hero only on the landing view; once a search or filter is set it collapses so the
+         results stay near the top -->
+    <Transition
+      enter-active-class="transition-all duration-300 ease-out"
+      enter-from-class="opacity-0 max-h-0"
+      enter-to-class="opacity-100 max-h-60"
+      leave-active-class="transition-all duration-200 ease-in overflow-hidden"
+      leave-from-class="opacity-100 max-h-60"
+      leave-to-class="opacity-0 max-h-0"
+    >
+      <BrandLogo v-if="showLanding" class="pt-2 pb-8" />
+    </Transition>
 
     <!-- Desktop: results on the left, discount sidebar on the right. Smaller: sidebar below. -->
     <div class="lg:grid lg:grid-cols-[minmax(0,1fr)_18rem] lg:gap-8">
@@ -218,14 +231,23 @@ useHead({ title: () => query.value.trim() })
           type="search"
           placeholder="Search game..."
           aria-label="Search game"
-          class="w-full p-3 rounded-xl bg-gray-800 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
+          class="field w-full px-4 py-3 text-lg rounded-2xl mb-4 shadow-lg shadow-black/20"
         />
 
         <SearchFilters v-model="filters" :currency="currency" :has-query="hasQuery" />
 
-        <p v-if="loading" class="text-center text-gray-400" role="status">Searching…</p>
-        <p v-else-if="error" class="text-center text-red-400" role="alert">⚠️ {{ error }}</p>
-        <p v-else-if="searched && games.length === 0" class="text-center text-gray-400">
+        <!-- First load of a search: card-shaped placeholders. Later loads dim the old cards. -->
+        <div
+          v-if="loading && !games.length"
+          class="grid gap-6 grid-cols-2 sm:grid-cols-3 md:grid-cols-4"
+          role="status"
+          aria-label="Searching"
+        >
+          <div v-for="n in 8" :key="n" class="skeleton aspect-[3/4]" />
+        </div>
+        <p v-else-if="loading" class="sr-only" role="status">Searching…</p>
+        <p v-else-if="error" class="text-center text-danger" role="alert">⚠️ {{ error }}</p>
+        <p v-else-if="searched && games.length === 0" class="text-center text-muted">
           <template v-if="searched.query">
             No games found for "{{ searched.query }}"<template v-if="searched.filtered">
               with these filters</template
@@ -270,11 +292,11 @@ useHead({ title: () => query.value.trim() })
         <div v-if="games.length && !loading && hasMore" class="flex justify-center mt-8">
           <button
             type="button"
-            class="px-6 py-3 rounded-xl border focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 disabled:opacity-60"
+            class="px-6 py-3 rounded-xl border focus:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:opacity-60"
             :class="
               loadMoreError
-                ? 'border-red-500 text-red-300 hover:bg-red-500/10'
-                : 'border-gray-600 bg-gray-800 hover:bg-gray-700'
+                ? 'border-danger text-danger hover:bg-danger/10'
+                : 'border-line-strong bg-surface hover:bg-surface-2'
             "
             :disabled="loadingMore"
             @click="loadMore"

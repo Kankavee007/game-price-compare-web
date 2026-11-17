@@ -157,7 +157,7 @@ function price(game: Game) {
     <button
       v-if="!expanded"
       type="button"
-      class="sm:hidden p-2 rounded-lg text-gray-300 hover:text-white hover:bg-gray-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+      class="sm:hidden p-2 rounded-lg text-fg/80 hover:text-fg hover:bg-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
       aria-label="Search games"
       @click="expand"
     >
@@ -178,7 +178,7 @@ function price(game: Game) {
         :aria-expanded="open"
         :aria-controls="ids.list"
         :aria-activedescendant="active >= 0 ? optionId(active) : undefined"
-        class="w-44 sm:w-56 p-2 rounded-lg bg-gray-800 border border-gray-700 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        class="field w-44 sm:w-56 p-2 text-sm"
         @input="onInput"
         @keydown="onKeydown"
       />
@@ -186,13 +186,13 @@ function price(game: Game) {
 
     <div
       v-show="open"
-      class="absolute right-0 z-20 mt-2 w-80 max-w-[calc(100vw-2rem)] rounded-xl bg-gray-800 border border-gray-700 shadow-xl overflow-hidden"
+      class="absolute right-0 z-20 mt-2 w-80 max-w-[calc(100vw-2rem)] rounded-2xl bg-surface/95 backdrop-blur border border-line shadow-2xl shadow-black/40 overflow-hidden"
     >
-      <p v-if="loading" class="p-3 text-sm text-gray-400" role="status">Searching…</p>
-      <p v-else-if="failed" class="p-3 text-sm text-red-300" role="status">
+      <p v-if="loading" class="p-3 text-sm text-muted" role="status">Searching…</p>
+      <p v-else-if="failed" class="p-3 text-sm text-danger" role="status">
         Suggestions unavailable. Press Enter to search.
       </p>
-      <p v-else-if="results.length === 0" class="p-3 text-sm text-gray-400" role="status">
+      <p v-else-if="results.length === 0" class="p-3 text-sm text-muted" role="status">
         No games found
       </p>
       <ul :id="ids.list" role="listbox" aria-label="Suggestions" :hidden="loading || failed">
@@ -203,7 +203,7 @@ function price(game: Game) {
           role="option"
           :aria-selected="i === active"
           class="flex items-center gap-3 p-2 cursor-pointer"
-          :class="i === active ? 'bg-gray-700' : 'hover:bg-gray-700/60'"
+          :class="i === active ? 'bg-surface-2' : 'hover:bg-surface-2/60'"
           @mousedown.prevent
           @mousemove="active = i"
           @click="openGame(game)"
@@ -212,15 +212,15 @@ function price(game: Game) {
             :src="game.thumb"
             alt=""
             loading="lazy"
-            class="w-14 h-7 object-cover rounded shrink-0 bg-gray-700"
+            class="w-14 h-7 object-cover rounded shrink-0 bg-surface-2"
           />
           <span class="flex-1 min-w-0 text-sm truncate">{{ game.name }}</span>
-          <span class="text-sm text-green-400 font-semibold whitespace-nowrap">{{
+          <span class="text-sm text-success font-semibold whitespace-nowrap">{{
             price(game)
           }}</span>
         </li>
       </ul>
-      <p v-if="!loading && !failed && results.length" class="px-3 py-2 text-xs text-gray-500">
+      <p v-if="!loading && !failed && results.length" class="px-3 py-2 text-xs text-subtle">
         Enter: all results for "{{ text.trim() }}"
       </p>
     </div>

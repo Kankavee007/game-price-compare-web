@@ -4,11 +4,15 @@ Instructions for AI coding agents (Claude Code and others) working on this repo.
 
 ## Role
 
-Help the owner implement and develop the **game-price-compare-web** website: a game price search
-(CheapShark + exchange rates) with a game detail page (IGDB info + every store's price).
+Help the owner implement and develop the **game-price-compare-web** website (brand: **PixSales -
+Pixel Perfect Deals**): a game price search (CheapShark + exchange rates) with a game detail page
+(IGDB info + every store's price).
 
-- `frontend/`: Nuxt 4 (Vue 3, TypeScript) + Tailwind, `ssr: false`, prerendered with `nuxt generate`
-- `backend/`: Flask API (`/api/search`, `/api/games/<id>`, `/api/health`)
+- `frontend/`: Nuxt 4 (Vue 3, TypeScript) + Tailwind, every page prerendered with `nuxt generate`.
+  `ssr: true` by default (build-time only), with `routeRules` turning SSR off for `/` and
+  `/games/**` (client-only shells). `/about`, `/wishlist`, `/alerts`, `/browse` are SSR-prerendered.
+- `backend/`: Flask API under `/api/*` (search, deals, stores, prices, alerts, genres, browse,
+  games/<id>, health; full list in README)
 - `harness/feature_list.json`: feature specs and progress tracker
 - Deploy: Vercel Services (`vercel.json`), local Docker via `docker-compose.yml`
 
@@ -126,7 +130,118 @@ Frontend (`frontend/app/`):
 - Keep `types.ts` matching the API responses.
 - Pages are prerendered: no server-side data fetching. Dynamic routes need `routeRules` +
   a `vercel.json` route (see README "Deploy").
+- Browser-only state (localStorage, `<html data-theme>`, `window`) must be read on the client
+  (`onMounted`, `<ClientOnly>`). On SSR-prerendered routes `useState` arrives with the server's
+  value, so sync it after mount (see `useTheme().sync()`).
 - Tailwind for styling; handle loading, empty and error states on every data-driven view.
+- Styling, theme, motion, brand and UI components: follow **Design system** below.
+
+## Design system
+
+Every new page or component must look like it was always part of PixSales. Before building UI,
+open a similar existing view (`GameCard.vue`, `SearchFilters.vue`, `StoreSelect.vue`,
+`pages/games/[id].vue`) and copy its patterns instead of inventing new ones.
+
+### Look and feel
+
+- Clean and modern with a playful touch, but never loud: dark backgrounds, soft glass panels,
+  one accent color doing the work, small rewarding hover moments (lift + glow).
+- Dark only. Every preset is a dark theme; there is no light mode.
+- Content first: game art is the most colorful thing on the page, the UI stays calm around it.
+
+### Brand
+
+- Name: **PixSales**, tagline **Pixel Perfect Deals** (title case, or spaced uppercase under the
+  logo). Tab titles: `<page> - PixSales`; home: `PixSales - Pixel Perfect Deals`.
+- Source artwork: `pictures/pixsales.png` (white "Pix" + green "Sales" on transparent).
+  Web versions in `frontend/public/brand/`:
+  - `pixsales-logo.png`: full logo, for large areas only (search hero, about, error page) via
+    `<BrandLogo />`.
+  - `pixsales-mark.png`: the cropped "P" controller mark without text, for small areas (top bar,
+    favicon, touch icon). In the top bar it sits next to the text `Pix<span class="text-brand">Sales</span>`.
+  - Regenerate both from the source artwork (crop, never redraw); keep transparent backgrounds.
+- `text-brand` / `--c-brand` (logo green `56 238 87`) is the same in every preset and is only for
+  the brand name and logo accents, not for UI states.
+
+### Color
+
+- Colors are CSS variables in `app/assets/css/main.css` holding `R G B` channels, mapped to
+  Tailwind names in `tailwind.config.js`. Use only these tokens, never raw palette classes
+  (`gray-800`, `blue-500`...) or hex values in components; `text-white` only on `accent-strong`
+  and `danger-strong` fills:
+
+  | Token | Use |
+  |---|---|
+  | `bg` | page background (with the fixed radial glows on `body`) |
+  | `surface` / `surface-2` | panels, cards / inputs, hovered or raised areas |
+  | `line` / `line-strong` | borders / hovered borders |
+  | `fg` / `muted` / `subtle` | main text / secondary text / hints and placeholders |
+  | `accent` | links, focus rings, current item, highlights |
+  | `accent-strong` | filled buttons and selected chips (white text on it) |
+  | `accent-2` | second highlight (genre name, small emphasis) |
+  | `success` | prices and "cheapest" states |
+  | `warn` / `danger` / `danger-strong` | lowest-ever badges / error text / filled red badges |
+
+- Opacity modifiers are fine (`bg-surface/70`, `border-danger/40`).
+- Presets: Nebula (default, `:root`), Lime and Ember (`:root[data-theme=...]`). A new preset
+  redefines every variable, stays dark, and keeps `fg`, `muted`, `subtle`, `accent`, `accent-2`,
+  `success`, `warn`, `danger` at WCAG AA (4.5:1) on `bg`, `surface` and `surface-2`, with white
+  text at 4.5:1 on `accent-strong` and `danger-strong`. Add it to `THEMES` in
+  `composables/useTheme.ts` and to the inline script in `nuxt.config.ts`.
+
+### Type
+
+- Body: Inter (`font-sans`). Headings `h1`-`h3`: Space Grotesk (`font-display`, tight tracking,
+  set globally). Prices in cards use `font-display font-bold`.
+- Sizes: page title `text-3xl font-bold`, section title `text-xl font-semibold`, body
+  `text-base`, controls and secondary text `text-sm`, captions `text-xs`.
+
+### Shape, surfaces, spacing
+
+- Radius: `rounded-xl` for controls and small boxes, `rounded-2xl` for cards, panels and popovers,
+  `rounded-full` for chips and badges.
+- Shared classes (in `main.css`), use them before writing long class lists:
+  `.panel` (glass card), `.field` (input / dropdown button), `.btn-primary` (gradient filled
+  action), `.btn-ghost` (outlined action; add `border-danger/60 hover:text-danger` for retry
+  buttons), `.nav-link` / `.nav-link-active`, `.skeleton` (loading shape).
+- Controls are 40px high (`h-10`) with labels above in `text-sm text-muted`; filter rows use an
+  equal-column grid (1 / 2 / 4 columns).
+- Page width `max-w-6xl`, page padding `p-6`, sections `space-y-8` / `mb-10`, grids `gap-4`–`gap-6`.
+- Elevation: cards lift on hover (`hover:-translate-y-1` / `-1.5`) with `shadow-glow` and an
+  accent ring or border; popovers use `bg-surface/95 backdrop-blur border-line shadow-2xl`.
+
+### Motion
+
+- Short and soft: hovers 150–300 ms, popovers 100–150 ms (fade + 1px rise + 98% scale), page
+  change 220 ms (`.page-*`), reveal 500 ms.
+- `v-reveal` on cards, rows and sections that should fade in on first view (put it on an outer
+  wrapper if the element has its own hover transform). Images fade in on load (`GameImage`).
+- Everything must render fully under `prefers-reduced-motion` and without IntersectionObserver.
+
+### Components to reuse
+
+- Dropdown, single choice: `PickSelect`. Multiple choice with search: `StoreSelect`.
+  Action menu: `ThemeSwitcher` pattern. Never use a native `<select>`.
+- All popovers: keyboard support, Esc returns focus to the trigger, close on outside click or
+  Tab away, open toward the side with room so they stay inside a 360px screen, `z-20`–`z-40`
+  (the top bar is `z-30`).
+- Game tiles: `GameCard` (+ `GameImage` for covers with fallback). Logo: `BrandLogo`.
+- States: loading = `.skeleton` shapes of the real content; empty = short text + a link to act;
+  error = `⚠️` + message in `text-danger` + a "Try again" `.btn-ghost` when retry makes sense.
+
+### Copy and icons
+
+- Short, friendly, plain English ("No store matches", "Try again"). Sentence case for buttons
+  and labels.
+- Emoji are the icon set (🔥 🎨 ♡ 🏷️ ⚠️ 💰 🎮); mark decorative ones `aria-hidden`.
+
+### Layout and accessibility checks
+
+- Works from 360px wide with no sideways scroll; the sticky top bar stays two rows on phones
+  (at 320px a third row is acceptable).
+- Every control has a visible `focus-visible` ring in `accent` and an accessible name.
+- Check new UI in all three presets (`localStorage.theme = 'lime'`, `'ember'`) and at 360px,
+  768px and desktop before calling it done.
 
 ## Checks before saying "done"
 
@@ -136,5 +251,12 @@ cd frontend && npm run type-check && npm run lint
 ```
 
 For UI changes also run the app (`FLASK_DEBUG=1 python app.py` + `npm run dev`) and check the page
-in the browser. Report results honestly: if a check fails or was skipped, say so.
+in the browser at phone (360px) and desktop widths. Report results honestly: if a check fails or
+was skipped, say so.
+
+- CheapShark rate-limits quickly (HTTP 429, shown as "price service unavailable"). Each search page
+  load makes 4+ requests, so do not reload data pages in a loop while testing; wait a few minutes
+  and test pages one at a time. Static pages (`/about`, `/alerts`) need no API.
+- Changing `tailwind.config.js` needs a dev server restart.
+
 Update `README.md` when env vars, endpoints, folder layout or run/deploy steps change.

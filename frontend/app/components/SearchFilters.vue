@@ -18,7 +18,17 @@ const defaultSort = computed(() => (props.hasQuery ? 'relevance' : 'deal'))
 const sortChoices = computed(() =>
   SORT_OPTIONS.filter((o) => o.key !== 'relevance' && o.key !== defaultSort.value),
 )
-const sortValue = computed(() => {
+// Options for the dropdowns; '' is the default choice (no filter / API default sort)
+const sortPickOptions = computed(() => [
+  { value: '', label: props.hasQuery ? 'Best match' : 'Best deals' },
+  ...sortChoices.value.map((o) => ({ value: o.key as string, label: o.label })),
+])
+const ratingPickOptions = [
+  { value: '', label: 'Any' },
+  ...RATINGS.map((r) => ({ value: String(r), label: `${r}%+` })),
+]
+
+const sortValue = computed<string>(() => {
   const sort = filters.value.sort
   return !sort || sort === defaultSort.value || sort === 'relevance' ? '' : sort
 })
@@ -61,21 +71,17 @@ function toNumber(text: string): number | null {
   return Number.isFinite(n) ? n : null
 }
 
-function toggleStore(id: string) {
-  const stores = filters.value.stores.includes(id)
-    ? filters.value.stores.filter((s) => s !== id)
-    : [...filters.value.stores, id]
-  update({ stores })
-}
-
-// Store chips are optional: if the list cannot be loaded they are hidden, other filters still work
+// The store filter is optional: if the list cannot be loaded its button says so and is
+// disabled, the other filters still work
 const stores = ref<Store[]>([])
+const storeStatus = ref<'loading' | 'ready' | 'error'>('loading')
 const controller = new AbortController()
 onMounted(async () => {
   try {
     stores.value = await getStores(controller.signal)
+    storeStatus.value = 'ready'
   } catch {
-    stores.value = []
+    if (!controller.signal.aborted) storeStatus.value = 'error'
   }
 })
 onBeforeUnmount(() => controller.abort())
@@ -86,11 +92,12 @@ function reset() {
 </script>
 
 <template>
-  <section aria-label="Filters" class="mb-8">
+  <!-- relative z-10: the store dropdown opens over the results below -->
+  <section aria-label="Filters" class="relative z-10 mb-8">
     <div class="flex items-center gap-3 md:hidden">
       <button
         type="button"
-        class="px-4 py-2 rounded-lg bg-gray-800 border border-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+        class="btn-ghost"
         :aria-expanded="open"
         aria-controls="search-filters"
         @click="open = !open"
@@ -101,78 +108,85 @@ function reset() {
 
     <div
       id="search-filters"
-      class="mt-3 md:mt-0 space-y-4 bg-gray-800/60 border border-gray-700 rounded-xl p-4"
+      class="panel mt-3 md:mt-0 space-y-4 p-4"
       :class="open ? 'block' : 'hidden md:block'"
     >
-      <div class="flex flex-wrap items-end gap-4">
-        <fieldset class="flex items-end gap-2">
-          <legend class="text-sm text-gray-400 mb-1">Price ({{ currency }})</legend>
-          <input
-            :value="minText"
-            type="number"
-            inputmode="decimal"
-            min="0"
-            step="any"
-            placeholder="Min"
-            aria-label="Minimum price"
-            class="w-24 p-2 rounded-lg bg-gray-900 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            :aria-invalid="!!rangeError"
-            aria-describedby="price-error"
-            @input="onPrice('minPrice', ($event.target as HTMLInputElement).value)"
-          />
-          <span class="pb-2 text-gray-500">–</span>
-          <input
-            :value="maxText"
-            type="number"
-            inputmode="decimal"
-            min="0"
-            step="any"
-            placeholder="Max"
-            aria-label="Maximum price"
-            class="w-24 p-2 rounded-lg bg-gray-900 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            :aria-invalid="!!rangeError"
-            aria-describedby="price-error"
-            @input="onPrice('maxPrice', ($event.target as HTMLInputElement).value)"
-          />
+      <!-- Four equal boxes: one per row on phones, two on tablets, four from lg up -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <fieldset class="flex flex-col gap-1 min-w-0">
+          <legend class="text-sm text-muted mb-1">Price ({{ currency }})</legend>
+          <!-- Min and max share one box, the same size as the dropdowns -->
+          <div
+            class="field flex h-10 items-center gap-1 px-3 focus-within:ring-2 focus-within:ring-accent focus-within:border-transparent"
+            :class="{ '!border-danger': rangeError }"
+          >
+            <input
+              :value="minText"
+              type="number"
+              inputmode="decimal"
+              min="0"
+              step="any"
+              placeholder="Min"
+              aria-label="Minimum price"
+              class="w-full min-w-0 bg-transparent text-sm placeholder:text-subtle focus:outline-none"
+              :aria-invalid="!!rangeError"
+              aria-describedby="price-error"
+              @input="onPrice('minPrice', ($event.target as HTMLInputElement).value)"
+            />
+            <span class="text-subtle" aria-hidden="true">–</span>
+            <input
+              :value="maxText"
+              type="number"
+              inputmode="decimal"
+              min="0"
+              step="any"
+              placeholder="Max"
+              aria-label="Maximum price"
+              class="w-full min-w-0 bg-transparent text-sm text-right placeholder:text-subtle focus:outline-none"
+              :aria-invalid="!!rangeError"
+              aria-describedby="price-error"
+              @input="onPrice('maxPrice', ($event.target as HTMLInputElement).value)"
+            />
+          </div>
         </fieldset>
 
-        <label class="flex flex-col text-sm text-gray-400">
-          Sort by
-          <select
-            :value="sortValue"
-            class="mt-1 p-2 rounded-lg bg-gray-900 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-            @change="
-              update({
-                sort: (($event.target as HTMLSelectElement).value || null) as DealFilters['sort'],
-              })
-            "
-          >
-            <option value="">{{ hasQuery ? 'Best match' : 'Best deals' }}</option>
-            <option v-for="o in sortChoices" :key="o.key" :value="o.key">{{ o.label }}</option>
-          </select>
-        </label>
+        <div class="flex flex-col gap-1 min-w-0 text-sm text-muted">
+          <span aria-hidden="true">Sort by</span>
+          <PickSelect
+            label="Sort by"
+            :model-value="sortValue"
+            :options="sortPickOptions"
+            @update:model-value="update({ sort: ($event || null) as DealFilters['sort'] })"
+          />
+        </div>
 
-        <label class="flex flex-col text-sm text-gray-400">
-          Steam rating
-          <select
-            :value="filters.minRating ?? ''"
-            class="mt-1 p-2 rounded-lg bg-gray-900 border border-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-            @change="
-              update({
-                minRating: toNumber(($event.target as HTMLSelectElement).value),
-              })
-            "
-          >
-            <option value="">Any</option>
-            <option v-for="r in RATINGS" :key="r" :value="r">{{ r }}%+</option>
-          </select>
-        </label>
+        <div class="flex flex-col gap-1 min-w-0 text-sm text-muted">
+          <span aria-hidden="true">Steam rating</span>
+          <PickSelect
+            label="Steam rating"
+            :model-value="filters.minRating === null ? '' : String(filters.minRating)"
+            :options="ratingPickOptions"
+            @update:model-value="update({ minRating: toNumber($event) })"
+          />
+        </div>
 
-        <label class="flex items-center gap-2 pb-2 cursor-pointer">
+        <div class="flex flex-col gap-1 min-w-0 text-sm text-muted">
+          <span aria-hidden="true">Stores</span>
+          <StoreSelect
+            :model-value="filters.stores"
+            :stores="stores"
+            :status="storeStatus"
+            @update:model-value="update({ stores: $event })"
+          />
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-4">
+        <label class="flex items-center gap-2 text-sm cursor-pointer">
           <input
             type="checkbox"
             :checked="filters.onSale"
-            class="w-4 h-4 accent-blue-500"
+            class="w-4 h-4 accent-[rgb(var(--c-accent-strong))]"
             @change="update({ onSale: ($event.target as HTMLInputElement).checked })"
           />
           On sale only
@@ -181,35 +195,16 @@ function reset() {
         <button
           v-if="count"
           type="button"
-          class="ml-auto pb-2 text-blue-400 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded"
+          class="ml-auto text-sm text-accent hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded"
           @click="reset"
         >
           Reset ({{ count }})
         </button>
       </div>
 
-      <p v-if="rangeError" id="price-error" class="text-sm text-red-400" role="alert">
+      <p v-if="rangeError" id="price-error" class="text-sm text-danger" role="alert">
         {{ rangeError }}
       </p>
-
-      <div v-if="stores.length" role="group" aria-label="Stores" class="flex flex-wrap gap-2">
-        <button
-          v-for="s in stores"
-          :key="s.storeID"
-          type="button"
-          :aria-pressed="filters.stores.includes(s.storeID)"
-          class="flex items-center gap-1.5 px-3 py-1 rounded-full border text-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-          :class="
-            filters.stores.includes(s.storeID)
-              ? 'bg-blue-600 border-blue-500 text-white'
-              : 'bg-gray-900 border-gray-700 text-gray-300 hover:border-gray-500'
-          "
-          @click="toggleStore(s.storeID)"
-        >
-          <img v-if="s.logo" :src="s.logo" alt="" class="w-4 h-4" loading="lazy" />
-          {{ s.storeName }}
-        </button>
-      </div>
     </div>
   </section>
 </template>

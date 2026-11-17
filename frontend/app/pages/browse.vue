@@ -105,7 +105,7 @@ useHead({ title: () => (pickedName.value ? `Browse ${pickedName.value}` : 'Brows
   <div class="space-y-8">
     <div class="flex flex-wrap items-center justify-between gap-4">
       <h1 class="text-3xl font-bold">
-        Browse <span v-if="pickedName" class="text-blue-300">{{ pickedName }}</span
+        Browse <span v-if="pickedName" class="text-accent-2">{{ pickedName }}</span
         ><span v-else>by genre</span>
       </h1>
     </div>
@@ -113,17 +113,17 @@ useHead({ title: () => (pickedName.value ? `Browse ${pickedName.value}` : 'Brows
     <!-- Genre list: always shown so another genre is one click away -->
     <section aria-label="Genres">
       <ul v-if="genresLoading" class="flex flex-wrap gap-2" role="status" aria-label="Loading">
-        <li v-for="n in 12" :key="n" class="h-8 w-28 rounded-full bg-gray-800 animate-pulse" />
+        <li v-for="n in 12" :key="n" class="h-8 w-28 skeleton rounded-full" />
       </ul>
       <div
         v-else-if="genresError"
-        class="flex flex-wrap items-center gap-4 p-4 rounded-xl border border-red-500/40 bg-red-500/5"
+        class="flex flex-wrap items-center gap-4 p-4 rounded-2xl border border-danger/40 bg-danger/10"
         role="alert"
       >
-        <p class="text-red-300">⚠️ Genres unavailable.</p>
+        <p class="text-danger">⚠️ Genres unavailable.</p>
         <button
           type="button"
-          class="px-4 py-2 rounded-lg border border-red-500 text-red-200 hover:bg-red-500/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+          class="btn-ghost border-danger/60 hover:border-danger hover:text-danger"
           @click="loadGenres"
         >
           Try again
@@ -133,11 +133,11 @@ useHead({ title: () => (pickedName.value ? `Browse ${pickedName.value}` : 'Brows
         <li v-for="g in genres" :key="g.id">
           <NuxtLink
             :to="genreLink(g.id)"
-            class="block px-3 py-1.5 rounded-full border text-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+            class="block px-3 py-1.5 rounded-full border text-sm transition focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             :class="
               String(g.id) === genreParam
-                ? 'bg-blue-600 border-blue-500 text-white'
-                : 'bg-gray-900 border-gray-700 text-gray-300 hover:border-gray-500'
+                ? 'bg-accent-strong border-accent text-white'
+                : 'bg-bg border-line text-fg/80 hover:border-line-strong'
             "
             :aria-current="String(g.id) === genreParam ? 'page' : undefined"
             >{{ g.name }}</NuxtLink
@@ -146,13 +146,13 @@ useHead({ title: () => (pickedName.value ? `Browse ${pickedName.value}` : 'Brows
       </ul>
     </section>
 
-    <p v-if="!genreParam" class="text-gray-400">
+    <p v-if="!genreParam" class="text-muted">
       Pick a genre to see its most popular PC games and their cheapest price.
     </p>
 
     <div
       v-else-if="unknownGenre"
-      class="p-4 rounded-xl border border-amber-500/50 bg-amber-500/5 text-amber-300"
+      class="p-4 rounded-xl border border-warn/50 bg-warn/5 text-warn"
       role="alert"
     >
       Unknown genre. Pick one from the list above.
@@ -160,13 +160,13 @@ useHead({ title: () => (pickedName.value ? `Browse ${pickedName.value}` : 'Brows
 
     <div
       v-else-if="error"
-      class="flex flex-wrap items-center gap-4 p-4 rounded-xl border border-red-500/40 bg-red-500/5"
+      class="flex flex-wrap items-center gap-4 p-4 rounded-2xl border border-danger/40 bg-danger/10"
       role="alert"
     >
-      <p class="text-red-300">⚠️ {{ error }}</p>
+      <p class="text-danger">⚠️ {{ error }}</p>
       <button
         type="button"
-        class="px-4 py-2 rounded-lg border border-red-500 text-red-200 hover:bg-red-500/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+        class="btn-ghost border-danger/60 hover:border-danger hover:text-danger"
         @click="loadGames"
       >
         Try again
@@ -179,42 +179,42 @@ useHead({ title: () => (pickedName.value ? `Browse ${pickedName.value}` : 'Brows
       role="status"
       aria-label="Loading"
     >
-      <li v-for="n in 8" :key="n" class="h-80 rounded-2xl bg-gray-800 animate-pulse" />
+      <li v-for="n in 8" :key="n" class="skeleton aspect-[3/4]" />
     </ul>
 
-    <p v-else-if="result && result.games.length === 0" class="text-gray-400">
+    <p v-else-if="result && result.games.length === 0" class="text-muted">
       No games found for this genre.
     </p>
 
     <ul v-else-if="result" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-      <li v-for="game in result.games" :key="game.name">
+      <li v-for="game in result.games" :key="game.name" v-reveal>
         <NuxtLink
           :to="gameLink(game)"
-          class="flex flex-col h-full rounded-2xl overflow-hidden bg-gray-800 border border-gray-700 hover:border-gray-500 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+          class="panel flex flex-col h-full overflow-hidden hover:border-accent/60 hover:shadow-glow hover:-translate-y-1 duration-300 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         >
           <img
             v-if="game.cover"
             :src="game.cover"
             alt=""
             loading="lazy"
-            class="w-full aspect-[3/4] object-cover bg-gray-700"
+            class="w-full aspect-[3/4] object-cover bg-surface-2"
           />
           <div
             v-else
-            class="w-full aspect-[3/4] bg-gray-700 flex items-center justify-center text-4xl"
+            class="w-full aspect-[3/4] bg-surface-2 flex items-center justify-center text-4xl"
             aria-hidden="true"
           >
             🎮
           </div>
           <div class="flex flex-col flex-1 gap-1 p-3">
             <p class="font-semibold leading-snug line-clamp-2">{{ game.name }}</p>
-            <p v-if="game.rating !== null" class="text-xs text-gray-400">
+            <p v-if="game.rating !== null" class="text-xs text-muted">
               Rating {{ game.rating }}/100
             </p>
-            <p v-if="game.price !== null" class="mt-auto text-lg font-bold text-green-400">
+            <p v-if="game.price !== null" class="mt-auto text-lg font-bold text-success">
               {{ game.price.toFixed(2) }} {{ result.currency }}
             </p>
-            <p v-else class="mt-auto text-sm text-gray-400">Not sold in tracked stores</p>
+            <p v-else class="mt-auto text-sm text-muted">Not sold in tracked stores</p>
           </div>
         </NuxtLink>
       </li>

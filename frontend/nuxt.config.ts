@@ -32,9 +32,37 @@ export default defineNuxtConfig({
   },
 
   app: {
+    // Fade + small slide between pages; CSS in assets/css/main.css (.page-*)
+    pageTransition: { name: 'page', mode: 'out-in' },
     head: {
-      title: 'Game Price Compare',
-      link: [{ rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }],
+      title: 'PixSales - Pixel Perfect Deals',
+      meta: [
+        {
+          name: 'description',
+          content:
+            'PixSales finds the cheapest price for a PC game across stores, in your currency.',
+        },
+      ],
+      // Apply the saved color preset before the first paint, so there is no flash of the
+      // default colors. Keep the names in sync with THEMES in composables/useTheme.ts.
+      script: [
+        {
+          innerHTML:
+            "try{var t=localStorage.getItem('theme');if(t==='lime'||t==='ember')document.documentElement.dataset.theme=t}catch(e){}",
+        },
+      ],
+      link: [
+        // PixSales mark on a dark tile (public/favicon.png), so it shows on light and dark tabs
+        { rel: 'icon', type: 'image/png', href: '/favicon.png' },
+        { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
+        // Theme fonts; display=swap shows the system font until they load (or if they fail)
+        { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
+        { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
+        {
+          rel: 'stylesheet',
+          href: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap',
+        },
+      ],
     },
   },
 

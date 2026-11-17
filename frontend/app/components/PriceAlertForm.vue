@@ -79,7 +79,8 @@ async function submit() {
   } catch (err) {
     if (controller.signal.aborted) return
     // Keep what the user typed so they can retry
-    serverError.value = err instanceof Error ? err.message : 'Could not create alert, try again later'
+    serverError.value =
+      err instanceof Error ? err.message : 'Could not create alert, try again later'
   }
   sending.value = false
 }
@@ -89,15 +90,15 @@ const ids = { email: useId(), price: useId(), note: useId() }
 
 <template>
   <section aria-label="Price alert" class="space-y-3">
-    <p v-if="done" class="text-green-400" role="status">
+    <p v-if="done" class="text-success" role="status">
       🔔 {{ done }}
-      <NuxtLink to="/alerts" class="text-blue-400 hover:underline">Manage your alerts</NuxtLink>
+      <NuxtLink to="/alerts" class="text-accent hover:underline">Manage your alerts</NuxtLink>
     </p>
 
     <button
       v-if="!open"
       type="button"
-      class="px-4 py-2 rounded-lg border border-blue-500 text-blue-300 hover:bg-blue-500/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+      class="px-4 py-2 rounded-lg border border-accent text-accent-2 hover:bg-accent/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
       @click="start"
     >
       🔔 {{ done ? 'Set another alert' : 'Alert me when cheaper' }}
@@ -105,37 +106,31 @@ const ids = { email: useId(), price: useId(), note: useId() }
 
     <form
       v-else
-      class="space-y-3 p-4 rounded-xl bg-gray-800 border border-gray-700"
+      class="panel space-y-3 p-4"
       novalidate
       :aria-describedby="ids.note"
       @submit.prevent="submit"
     >
       <div class="flex flex-wrap items-start gap-4">
         <div class="flex flex-col gap-1 flex-1 min-w-48">
-          <label :for="ids.email" class="text-sm text-gray-400">Email</label>
+          <label :for="ids.email" class="text-sm text-muted">Email</label>
           <input
             :id="ids.email"
             v-model="email"
             type="email"
             autocomplete="email"
             placeholder="you@example.com"
-            class="p-2 rounded-lg bg-gray-900 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            class="field p-2"
             :aria-invalid="submitted && !!emailError"
             :aria-describedby="submitted && emailError ? `${ids.email}-error` : undefined"
           />
-          <p
-            v-if="submitted && emailError"
-            :id="`${ids.email}-error`"
-            class="text-sm text-red-400"
-          >
+          <p v-if="submitted && emailError" :id="`${ids.email}-error`" class="text-sm text-danger">
             {{ emailError }}
           </p>
         </div>
 
         <div class="flex flex-col gap-1">
-          <label :for="ids.price" class="text-sm text-gray-400"
-            >Alert below ({{ currency }})</label
-          >
+          <label :for="ids.price" class="text-sm text-muted">Alert below ({{ currency }})</label>
           <input
             :id="ids.price"
             v-model="priceText"
@@ -143,53 +138,44 @@ const ids = { email: useId(), price: useId(), note: useId() }
             inputmode="decimal"
             min="0"
             step="any"
-            class="w-32 p-2 rounded-lg bg-gray-900 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            class="field w-32 p-2"
             :aria-invalid="submitted && !!priceError"
             :aria-describedby="submitted && priceError ? `${ids.price}-error` : undefined"
           />
-          <p
-            v-if="submitted && priceError"
-            :id="`${ids.price}-error`"
-            class="text-sm text-red-400"
-          >
+          <p v-if="submitted && priceError" :id="`${ids.price}-error`" class="text-sm text-danger">
             {{ priceError }}
           </p>
         </div>
       </div>
 
-      <p v-if="aboveCurrent" class="text-sm text-amber-300">
-        This is not below today's price ({{ currentPrice.toFixed(2) }} {{ currency }}), so the
-        alert may be sent right away.
+      <p v-if="aboveCurrent" class="text-sm text-warn">
+        This is not below today's price ({{ currentPrice.toFixed(2) }} {{ currency }}), so the alert
+        may be sent right away.
       </p>
 
-      <p :id="ids.note" class="text-xs text-gray-400">
+      <p :id="ids.note" class="text-xs text-muted">
         Your email is sent to CheapShark, which sends the alert and lets you manage or stop it. We
-        do not store it. <NuxtLink to="/alerts" class="text-blue-400 hover:underline"
-          >Manage your alerts</NuxtLink
-        >.
+        do not store it.
+        <NuxtLink to="/alerts" class="text-accent hover:underline">Manage your alerts</NuxtLink>.
         <template v-if="currency !== 'USD'">
           CheapShark checks prices in USD, so your target is converted at today's exchange rate.
         </template>
       </p>
 
       <div class="flex flex-wrap items-center gap-3">
-        <button
-          type="submit"
-          :disabled="sending"
-          class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 font-semibold disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300"
-        >
+        <button type="submit" :disabled="sending" class="btn-primary">
           {{ sending ? 'Setting alert…' : 'Set alert' }}
         </button>
         <button
           type="button"
-          class="px-4 py-2 rounded-lg text-gray-300 hover:bg-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+          class="btn-ghost border-transparent bg-transparent"
           @click="open = false"
         >
           Cancel
         </button>
       </div>
 
-      <p v-if="serverError" class="text-red-400" role="alert">⚠️ {{ serverError }}</p>
+      <p v-if="serverError" class="text-danger" role="alert">⚠️ {{ serverError }}</p>
     </form>
   </section>
 </template>
