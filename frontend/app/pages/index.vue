@@ -223,7 +223,16 @@ useHead({ title: () => query.value.trim() })
 
         <SearchFilters v-model="filters" :currency="currency" :has-query="hasQuery" />
 
-        <p v-if="loading" class="text-center text-muted" role="status">Searching…</p>
+        <!-- First load of a search: card-shaped placeholders. Later loads dim the old cards. -->
+        <div
+          v-if="loading && !games.length"
+          class="grid gap-6 grid-cols-2 sm:grid-cols-3 md:grid-cols-4"
+          role="status"
+          aria-label="Searching"
+        >
+          <div v-for="n in 8" :key="n" class="skeleton aspect-[3/4]" />
+        </div>
+        <p v-else-if="loading" class="sr-only" role="status">Searching…</p>
         <p v-else-if="error" class="text-center text-danger" role="alert">⚠️ {{ error }}</p>
         <p v-else-if="searched && games.length === 0" class="text-center text-muted">
           <template v-if="searched.query">

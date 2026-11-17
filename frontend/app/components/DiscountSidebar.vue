@@ -43,7 +43,7 @@ function price(value: number) {
     <h2 id="discounts-heading" class="text-lg font-bold mb-4">🔥 Biggest discounts</h2>
 
     <ul v-if="loading" class="space-y-3" role="status" aria-label="Loading">
-      <li v-for="n in 5" :key="n" class="h-16 rounded-xl bg-surface animate-pulse" />
+      <li v-for="n in 5" :key="n" class="skeleton h-16 rounded-xl" />
     </ul>
 
     <div

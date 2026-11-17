@@ -32,6 +32,8 @@ export default defineNuxtConfig({
   },
 
   app: {
+    // Fade + small slide between pages; CSS in assets/css/main.css (.page-*)
+    pageTransition: { name: 'page', mode: 'out-in' },
     head: {
       title: 'Game Price Compare',
       link: [

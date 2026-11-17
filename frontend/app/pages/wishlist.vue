@@ -86,7 +86,9 @@ useHead({ title: 'Wishlist' })
 
     <ClientOnly>
       <template #fallback>
-        <p class="text-muted" role="status">Loading your wishlist…</p>
+        <ul class="space-y-3" role="status" aria-label="Loading your wishlist">
+          <li v-for="n in 3" :key="n" class="skeleton h-20" />
+        </ul>
       </template>
 
       <div
@@ -124,6 +126,7 @@ useHead({ title: 'Wishlist' })
           <li
             v-for="{ item, price } in rows"
             :key="item.gameID"
+            v-reveal
             class="panel flex flex-wrap sm:flex-nowrap items-center gap-4 p-3"
             :class="price && price.savings > 0 ? 'border-success/50' : 'border-line'"
           >

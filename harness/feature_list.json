@@ -1016,7 +1016,7 @@
         "cd frontend && npm run type-check && npm run lint pass",
         "Walk through every workflow in the browser, including reduced motion (DevTools emulation)"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "theme-03",

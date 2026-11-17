@@ -113,7 +113,7 @@ useHead({ title: () => (pickedName.value ? `Browse ${pickedName.value}` : 'Brows
     <!-- Genre list: always shown so another genre is one click away -->
     <section aria-label="Genres">
       <ul v-if="genresLoading" class="flex flex-wrap gap-2" role="status" aria-label="Loading">
-        <li v-for="n in 12" :key="n" class="h-8 w-28 rounded-full bg-surface animate-pulse" />
+        <li v-for="n in 12" :key="n" class="h-8 w-28 skeleton rounded-full" />
       </ul>
       <div
         v-else-if="genresError"
@@ -179,7 +179,7 @@ useHead({ title: () => (pickedName.value ? `Browse ${pickedName.value}` : 'Brows
       role="status"
       aria-label="Loading"
     >
-      <li v-for="n in 8" :key="n" class="h-80 rounded-2xl bg-surface animate-pulse" />
+      <li v-for="n in 8" :key="n" class="skeleton aspect-[3/4]" />
     </ul>
 
     <p v-else-if="result && result.games.length === 0" class="text-muted">
@@ -187,7 +187,7 @@ useHead({ title: () => (pickedName.value ? `Browse ${pickedName.value}` : 'Brows
     </p>
 
     <ul v-else-if="result" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-      <li v-for="game in result.games" :key="game.name">
+      <li v-for="game in result.games" :key="game.name" v-reveal>
         <NuxtLink
           :to="gameLink(game)"
           class="panel flex flex-col h-full overflow-hidden hover:border-accent/60 hover:shadow-glow hover:-translate-y-1 duration-300 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"

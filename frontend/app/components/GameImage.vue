@@ -20,13 +20,19 @@ function firstStage(): Stage {
 }
 
 const stage = ref<Stage>(firstStage())
+// The picture fades in once it has loaded instead of popping in
+const loaded = ref(false)
 // Same component reused for another game (list re-ordered, new search): start again
 watch(
   () => [props.cover, props.thumb],
-  () => (stage.value = firstStage()),
+  () => {
+    stage.value = firstStage()
+    loaded.value = false
+  },
 )
 
 function onCoverError() {
+  loaded.value = false
   stage.value = props.thumb ? 'thumb' : 'none'
 }
 </script>
@@ -38,7 +44,9 @@ function onCoverError() {
       :src="cover!"
       :alt="alt"
       loading="lazy"
-      class="absolute inset-0 w-full h-full object-cover"
+      class="absolute inset-0 w-full h-full object-cover transition-opacity duration-500"
+      :class="loaded ? 'opacity-100' : 'opacity-0'"
+      @load="loaded = true"
       @error="onCoverError"
     />
 
@@ -54,7 +62,9 @@ function onCoverError() {
         :src="thumb!"
         :alt="alt"
         loading="lazy"
-        class="absolute inset-0 w-full h-full object-contain"
+        class="absolute inset-0 w-full h-full object-contain transition-opacity duration-500"
+        :class="loaded ? 'opacity-100' : 'opacity-0'"
+        @load="loaded = true"
         @error="stage = 'none'"
       />
     </template>

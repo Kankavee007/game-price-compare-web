@@ -78,11 +78,7 @@ const headingId = useId()
       role="status"
       aria-label="Loading"
     >
-      <div
-        v-for="n in 4"
-        :key="n"
-        class="w-40 shrink-0 md:w-auto h-60 rounded-2xl bg-surface animate-pulse"
-      />
+      <div v-for="n in 4" :key="n" class="w-40 shrink-0 md:w-auto skeleton aspect-[3/4]" />
     </div>
 
     <div

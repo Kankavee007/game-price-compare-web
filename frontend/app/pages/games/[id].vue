@@ -100,7 +100,18 @@ function formatDate(isoDate: string) {
       >← Back to search</NuxtLink
     >
 
-    <p v-if="loading && !game" class="text-center text-muted" role="status">Loading…</p>
+    <div v-if="loading && !game" class="space-y-8" role="status" aria-label="Loading">
+      <div class="flex flex-col sm:flex-row gap-6">
+        <div class="skeleton w-48 aspect-[3/4] shrink-0" />
+        <div class="flex-1 space-y-3 pt-2">
+          <div class="skeleton h-9 w-2/3 rounded-xl" />
+          <div class="skeleton h-5 w-1/3 rounded-lg" />
+          <div class="skeleton h-4 w-full rounded-lg" />
+          <div class="skeleton h-4 w-5/6 rounded-lg" />
+        </div>
+      </div>
+      <div class="skeleton h-40" />
+    </div>
 
     <div v-else-if="notFound" class="text-center space-y-2 py-16">
       <h1 class="text-3xl font-bold">Game not found</h1>
@@ -194,7 +205,7 @@ function formatDate(isoDate: string) {
       <!-- IGDB screenshots. Hidden when there are none or IGDB failed -->
       <ScreenshotGallery :screenshots="game.screenshots" :game-name="game.name" />
 
-      <section class="space-y-4">
+      <section v-reveal class="space-y-4">
         <div class="flex flex-wrap items-center justify-between gap-4">
           <h2 class="text-xl font-semibold">Prices in every store</h2>
         </div>
@@ -263,7 +274,12 @@ function formatDate(isoDate: string) {
       </section>
 
       <!-- IGDB similar games. Hidden when there are none or IGDB failed (prices still show) -->
-      <section v-if="game.similarGames.length" aria-labelledby="similar-heading" class="space-y-4">
+      <section
+        v-if="game.similarGames.length"
+        v-reveal
+        aria-labelledby="similar-heading"
+        class="space-y-4"
+      >
         <h2 id="similar-heading" class="text-xl font-semibold">Similar games</h2>
         <ul class="grid grid-cols-3 sm:grid-cols-6 gap-4">
           <li v-for="similar in game.similarGames" :key="similar.name">

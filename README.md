@@ -17,6 +17,7 @@ frontend/
     layouts/default.vue   # sticky header: nav + site-wide currency select (?currency= in the URL)
     pages/                # file = route (index.vue -> /, about.vue -> /about, wishlist.vue -> /wishlist, alerts.vue -> /alerts, browse.vue -> /browse?genre=<id>, games/[id].vue -> /games/<id>)
     components/           # GameCard, CurrencySelect, SearchFilters, StoreSelect (store filter dropdown), GameSection, DiscountSidebar, LowestBadge, WishlistHeart, WishlistSaleNotice, RecentlyViewed, PriceAlertForm, QuickSearch, GameImage (portrait cover with landscape fallback), ScreenshotGallery (auto-imported)
+    plugins/reveal.ts     # v-reveal directive: fade/rise in on first scroll into view (off with reduced motion)
     composables/          # useWishlist, useRecentlyViewed (localStorage, synced across tabs), storedList helper
     utils/                # auto-imported
       apiGet.ts           #   apiGet / apiPost: fetch /api/* with abort + 30 s timeout, ApiError(status)
