@@ -194,7 +194,7 @@ function formatDate(isoDate: string) {
             </div>
             <div v-if="game.releaseDate">
               <dt class="text-xs uppercase text-muted">Released</dt>
-              <dd class="text-white">{{ formatDate(game.releaseDate) }}</dd>
+              <dd class="text-fg">{{ formatDate(game.releaseDate) }}</dd>
             </div>
           </dl>
 

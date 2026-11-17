@@ -18,7 +18,7 @@ const saved = computed(() => wishlist.has(props.game.gameID))
     :title="saved ? 'Remove from wishlist' : 'Add to wishlist'"
     @click="wishlist.toggle(game)"
   >
-    <span :class="saved ? 'text-danger' : 'text-white'" aria-hidden="true">{{
+    <span :class="saved ? 'text-danger' : 'text-fg'" aria-hidden="true">{{
       saved ? '♥' : '♡'
     }}</span>
   </button>
