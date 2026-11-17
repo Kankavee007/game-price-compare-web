@@ -8,6 +8,10 @@ TWITCH_CLIENT_SECRET = os.environ.get("TWITCH_CLIENT_SECRET")
 
 # CheapShark ปฏิเสธ User-Agent ทั่วไปอย่าง python-requests ต้องระบุชื่อแอป
 # ตั้งค่าเองได้ผ่าน env เช่น "MyApp/1.0 (contact@example.com)"
+# Steam portrait cover (600x900) built from a Steam app id, no API call. Some new games use
+# hashed asset paths and return 404 here; the frontend then falls back to the landscape thumb.
+STEAM_COVER_URL = "https://shared.steamstatic.com/store_item_assets/steam/apps/{}/library_600x900.jpg"
+
 USER_AGENT = os.environ.get("CHEAPSHARK_USER_AGENT", "PriceCompareApp/1.0")
 
 REQUEST_TIMEOUT = 10  # วินาที ต่อ request ที่ยิงไป API ภายนอก

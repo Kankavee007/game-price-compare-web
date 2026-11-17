@@ -10,6 +10,7 @@ SEARCH_RESULT = [
         "cheapest": "9.99",
         "cheapestDealID": "deal-82",
         "external": "Portal",
+        "steamAppID": "400",
         "thumb": "https://example.com/portal.jpg",
     }
 ]
@@ -39,6 +40,7 @@ def test_converts_price_and_names_store():
             "price": 349.65,
             "currency": "THB",
             "thumb": "https://example.com/portal.jpg",
+            "cover": "https://shared.steamstatic.com/store_item_assets/steam/apps/400/library_600x900.jpg",
             "storeID": "1",
             "storeName": "Steam",
             "dealUrl": "https://www.cheapshark.com/redirect?dealID=deal-82",

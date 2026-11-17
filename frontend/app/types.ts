@@ -11,7 +11,8 @@ export interface Game extends LowestPrice {
   name: string
   price: number
   currency: string
-  thumb: string
+  thumb: string // small landscape image (CheapShark)
+  cover: string | null // portrait Steam cover, may 404 for new games; null when not on Steam
   storeID: string | null
   storeName: string | null
   dealUrl: string
@@ -136,6 +137,7 @@ export interface GamePrice extends LowestPrice {
   gameID: string
   name: string | null
   thumb: string | null
+  cover: string | null // portrait Steam cover, null when not on Steam
   price: number
   retailPrice: number
   savings: number // percent, 0-100

@@ -869,7 +869,7 @@
         "Add tests for the helper and the new field in each response; cd backend && pytest stays green",
         "Add cover to Game and price types in types.ts; update README"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "media-02",

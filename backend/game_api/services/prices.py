@@ -1,6 +1,7 @@
 from ..errors import InvalidCurrencyError, InvalidParamError
 from . import cheapshark, exchange
 from .lowest import lowest_price_fields
+from .steam import steam_cover_url
 
 MAX_IDS = 50  # same as the wishlist limit; CheapShark is called once per 25 ids
 
@@ -40,6 +41,7 @@ def get_prices(ids_param, currency):
             "gameID": gid,
             "name": info.get("title"),
             "thumb": info.get("thumb"),
+            "cover": steam_cover_url(info.get("steamAppID")),
             "price": round(float(best["price"]) * rate, 2),
             "retailPrice": round(float(best["retailPrice"]) * rate, 2),
             "savings": round(float(best["savings"])),
