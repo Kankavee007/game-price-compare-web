@@ -14,7 +14,8 @@
     "Wishlist and recently viewed are stored in the browser (localStorage), no accounts. Pages /wishlist and /browse use query strings (/browse?genre=12), not dynamic paths, so they can be prerendered like /about and need no vercel.json change.",
     "Price alerts use CheapShark GET /alerts?action=set&email=&gameID=&price= (price in USD). CheapShark sends the emails, so the user's email address leaves our server; the form must say so. The browser POSTs to Flask so the email is not in our URLs or access logs.",
     "Alert rate limits per IP per hour (owner's choice, 2026-11-16): set alert 10, manage email 5, counted separately (config.ALERTS_LIMITS). alert-01 says 'e.g. more than 5'; the final value for setting alerts is 10.",
-    "Phase 10 fixes card images. CheapShark only gives a small landscape 'thumb' (Steam capsule 231x87 or a store image). Portrait art comes from Steam's library_600x900.jpg built from steamAppID (no API call); it returns 404 for some new games (hashed asset paths) and games not on Steam have no steamAppID, so the browser falls back to the landscape thumb, shown whole (object-contain) over a blurred copy instead of cropped. Detail page screenshots come from IGDB (screenshots.image_id, added to the existing find_game query, no extra request): t_screenshot_big (889x500) in the strip, t_1080p in the full view."
+    "Phase 10 fixes card images. CheapShark only gives a small landscape 'thumb' (Steam capsule 231x87 or a store image). Portrait art comes from Steam's library_600x900.jpg built from steamAppID (no API call); it returns 404 for some new games (hashed asset paths) and games not on Steam have no steamAppID, so the browser falls back to the landscape thumb, shown whole (object-contain) over a blurred copy instead of cropped. Detail page screenshots come from IGDB (screenshots.image_id, added to the existing find_game query, no extra request): t_screenshot_big (889x500) in the strip, t_1080p in the full view.",
+    "Phase 12 (redesign): all colors are CSS variables (--c-bg, --c-surface, --c-accent...) exposed to Tailwind as semantic names (bg-surface, text-accent), so presets only swap variables on <html data-theme>. Motion uses CSS transitions + one IntersectionObserver directive, and is turned off under prefers-reduced-motion."
   ],
   "features": [
     {
@@ -955,6 +956,128 @@
         "Open the app at phone and desktop widths and walk through every workflow above"
       ],
       "passes": true
+    },
+    {
+      "id": "theme-01",
+      "phase": 12,
+      "category": "functional",
+      "description": "New dark theme on every page: violet + cyan accents on ink-navy, built on color tokens",
+      "workflows": {
+        "main": [
+          "User opens any page (search, browse, wishlist, game, alerts, about); all share the new look: ink-navy background, glassy cards, violet primary buttons, cyan highlights, rounded corners, display font for headings",
+          "Hovering a game card lifts it slightly with a soft violet glow; buttons and links have visible hover and focus states"
+        ],
+        "alternate": [
+          "Phone width: same theme, no horizontal scroll, text stays readable",
+          "Keyboard user: every control shows a clear focus ring in the accent color"
+        ],
+        "error": [
+          "Web font fails to load: text falls back to the system sans font, layout does not break",
+          "Error, empty and loading states (search fails, empty wishlist, 404 game) use the new theme and stay readable, never a blank page"
+        ]
+      },
+      "steps": [
+        "Define color tokens as CSS variables in main.css and map them in tailwind.config.js (bg, surface, surface-2, border, text, muted, accent, accent-2, success, danger)",
+        "Load the fonts (display + body) with a system fallback",
+        "Replace hard-coded gray-/blue- classes in layouts, pages and components with the tokens; restyle cards, buttons, inputs, badges",
+        "Check text contrast (WCAG AA) for text and muted on bg and surface",
+        "cd frontend && npm run type-check && npm run lint pass",
+        "Open every page at phone and desktop widths and walk through every workflow above"
+      ],
+      "passes": false
+    },
+    {
+      "id": "theme-02",
+      "phase": 12,
+      "category": "functional",
+      "description": "Smooth motion: page transitions, cards and sections fade in on load and on scroll",
+      "workflows": {
+        "main": [
+          "User goes from one page to another; the old page fades out and the new one fades and slides in (about 200-300ms)",
+          "Search results / deals load; game cards fade in one after another (short stagger), cover images fade in when loaded instead of popping",
+          "User scrolls down; sections and cards below the fold fade and rise in as they enter the screen, once each",
+          "While loading, card-shaped skeletons with a soft shimmer show instead of plain 'Loading…' text"
+        ],
+        "alternate": [
+          "OS setting 'reduce motion' on: no slides, shimmer or stagger; content just appears",
+          "Infinite scroll / 'load more': only the new cards animate, existing ones stay still",
+          "Back button: the restored page does not replay a long animation sequence"
+        ],
+        "error": [
+          "IntersectionObserver missing (old browser): everything is shown at once, nothing stays invisible",
+          "Image fails to load: existing fallback (landscape thumb, then placeholder) still shows and fades in"
+        ]
+      },
+      "steps": [
+        "Add Nuxt pageTransition (fade + small slide) in nuxt.config / app.vue",
+        "Add a v-reveal directive (IntersectionObserver, unobserve after first show) and use it on sections and GameCard",
+        "Fade images in on load in GameImage; add skeleton cards for loading states on search, browse, wishlist and game pages",
+        "Respect prefers-reduced-motion in CSS and in the directive",
+        "cd frontend && npm run type-check && npm run lint pass",
+        "Walk through every workflow in the browser, including reduced motion (DevTools emulation)"
+      ],
+      "passes": false
+    },
+    {
+      "id": "theme-03",
+      "phase": 12,
+      "category": "functional",
+      "description": "Theme preset switcher in the top bar (Nebula, Lime, Ember), saved per browser",
+      "workflows": {
+        "main": [
+          "User clicks the palette button in the top bar; a small menu lists Nebula (default, violet+cyan), Lime (charcoal+lime) and Ember (coral+amber) with color swatches",
+          "User picks Ember; the whole site recolors at once with a short color transition, the menu marks Ember as current",
+          "User reloads or opens another page; Ember is still applied with no flash of the default colors"
+        ],
+        "alternate": [
+          "First visit: Nebula is used",
+          "Keyboard: menu opens with Enter/Space, arrows move, Enter picks, Esc closes and returns focus to the button",
+          "Phone width: menu fits the screen and does not push the top bar to a third row"
+        ],
+        "error": [
+          "localStorage blocked (private mode): the picked theme applies for this visit, nothing crashes, it resets to Nebula on reload",
+          "Unknown saved value (old or edited): Nebula is used"
+        ]
+      },
+      "steps": [
+        "Add preset variable sets under [data-theme=...] in main.css",
+        "Add a useTheme composable (read/write localStorage, set data-theme on <html>) and an inline head script that applies the saved theme before first paint",
+        "Add ThemeSwitcher component to the top bar (accessible menu)",
+        "cd frontend && npm run type-check && npm run lint pass",
+        "Walk through every workflow in the browser, including blocked storage"
+      ],
+      "passes": false
+    },
+    {
+      "id": "stores-01",
+      "phase": 12,
+      "category": "functional",
+      "description": "Store filter is a dropdown with search and checkboxes instead of the row of store buttons",
+      "workflows": {
+        "main": [
+          "On the search page the filters show a 'Stores' button; user clicks it and a panel opens with a search box, 'Select all' / 'Clear', and a checkbox list of stores with their icons",
+          "User ticks Steam and GOG; results reload filtered to those stores, button reads 'Stores (2)', URL keeps the stores as today (shareable)",
+          "User clicks outside or presses Esc; panel closes, focus returns to the button"
+        ],
+        "alternate": [
+          "User types 'hum' in the panel search: only Humble Store is listed; no match shows 'No store matches'",
+          "Opening a shared link with stores in the URL: those boxes are already ticked and the count is shown",
+          "'Clear' unticks all (= all stores); Reset in the filter bar also clears them",
+          "Phone width: panel fits the screen width and scrolls inside if the list is long",
+          "Keyboard: Tab reaches the search box and each checkbox; Space toggles"
+        ],
+        "error": [
+          "Store list API fails: button shows 'Stores unavailable' and is disabled, other filters still work",
+          "Store list still loading: button shows 'Stores…' and is disabled"
+        ]
+      },
+      "steps": [
+        "Build StoreSelect component (button + popover panel, search, select all/clear, checkboxes) and use it in SearchFilters in place of the store buttons",
+        "Keep the DealFilters.stores shape and URL format unchanged",
+        "cd frontend && npm run type-check && npm run lint pass",
+        "Walk through every workflow in the browser at phone and desktop widths"
+      ],
+      "passes": false
     }
   ]
 }
