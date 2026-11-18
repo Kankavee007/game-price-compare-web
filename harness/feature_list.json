@@ -16,7 +16,8 @@
     "Alert rate limits per IP per hour (owner's choice, 2026-11-16): set alert 10, manage email 5, counted separately (config.ALERTS_LIMITS). alert-01 says 'e.g. more than 5'; the final value for setting alerts is 10.",
     "Phase 10 fixes card images. CheapShark only gives a small landscape 'thumb' (Steam capsule 231x87 or a store image). Portrait art comes from Steam's library_600x900.jpg built from steamAppID (no API call); it returns 404 for some new games (hashed asset paths) and games not on Steam have no steamAppID, so the browser falls back to the landscape thumb, shown whole (object-contain) over a blurred copy instead of cropped. Detail page screenshots come from IGDB (screenshots.image_id, added to the existing find_game query, no extra request): t_screenshot_big (889x500) in the strip, t_1080p in the full view.",
     "Phase 12 (redesign): all colors are CSS variables (--c-bg, --c-surface, --c-accent...) exposed to Tailwind as semantic names (bg-surface, text-accent), so presets only swap variables on <html data-theme>. Motion uses CSS transitions + one IntersectionObserver directive, and is turned off under prefers-reduced-motion.",
-    "Phase 13 (brand + controls): brand is 'PixSales - Pixel Perfect Deals'. Source artwork pictures/pixsales.png (white + green on transparent); public/brand/pixsales-logo.png is the trimmed full logo for large areas, public/brand/pixsales-mark.png the cropped 'P' controller mark for small areas (header, favicon). Native <select> controls are replaced by one shared PickSelect component styled like StoreSelect."
+    "Phase 13 (brand + controls): brand is 'PixSales - Pixel Perfect Deals'. Source artwork pictures/pixsales.png (white + green on transparent); public/brand/pixsales-logo.png is the trimmed full logo for large areas, public/brand/pixsales-mark.png the cropped 'P' controller mark for small areas (header, favicon). Native <select> controls are replaced by one shared PickSelect component styled like StoreSelect.",
+    "Phase 14 (wide search layout): the search page (/) uses a wider container (max-w-screen-2xl) so the screen has no empty sides; the top bar uses the same width on every page so its edges line up. Other pages keep their own narrower content width. Desktop search page = full-width search box on top, then three columns: sticky filter sidebar (left), results, biggest-discount sidebar (right, from xl; below results at lg). The top bar search box moves to the middle of the bar on every page; on / it only shows once the page's own search box has scrolled out of view (IntersectionObserver)."
   ],
   "features": [
     {
@@ -1162,6 +1163,105 @@
         "Walk through every workflow in the browser with mouse and keyboard at phone and desktop widths"
       ],
       "passes": true
+    },
+    {
+      "id": "layout-01",
+      "phase": 14,
+      "category": "functional",
+      "description": "Search page uses the full screen: wide search box on top, filters in a sticky left sidebar",
+      "workflows": {
+        "main": [
+          "User opens / on a desktop (1280px+); the logo hero shows (landing only), then the search box spans the full content width (left edge of the filters to right edge of the discount sidebar)",
+          "Below the search box: filters stacked vertically in a left column (Price, Sort by, Steam rating, Stores, On sale only, Reset), results in the middle, Biggest discounts on the right; little or no empty space on the left and right of the screen",
+          "User scrolls the results; the filter column stays pinned under the top bar and stays usable (dropdowns open over the results)",
+          "Changing a filter in the sidebar works as today (results reload, URL updates)"
+        ],
+        "alternate": [
+          "1024-1279px: filters on the left, results on the right, Biggest discounts moves below the results",
+          "Tablet (768-1023px): filters stay above the results as today (two equal boxes per row)",
+          "Phone (360px): search box full width, 'Filters' button opens the panel above the results as today; no sideways scroll",
+          "Very wide screen (1920px+): content stops at max-w-screen-2xl and is centered; results grid gets more columns instead of bigger cards",
+          "Short window (filter column taller than the screen): the column is not pinned, it scrolls with the page so nothing is cut off"
+        ],
+        "error": [
+          "Invalid price range: the price box gets a red border and the message under it inside the sidebar, as today",
+          "Store list fails: 'Stores unavailable' button in the sidebar, other filters still work",
+          "Search API fails: '⚠️' message and results area as today; sidebar stays in place"
+        ]
+      },
+      "steps": [
+        "Wider container for / and the top bar (max-w-screen-2xl); other pages keep their content width",
+        "index.vue: search box above a lg grid [filters 16rem | results | discounts 18rem at xl]",
+        "SearchFilters: vertical layout in the sidebar from lg, sticky with lg:top-24 lg:self-start; current grid below lg",
+        "Results / skeleton / landing section grids adapt to the wider column (more columns at 2xl)",
+        "cd frontend && npm run type-check && npm run lint pass",
+        "Check at 360px, 768px, 1024px, 1280px and 1920px in all three presets"
+      ],
+      "passes": false
+    },
+    {
+      "id": "layout-02",
+      "phase": 14,
+      "category": "functional",
+      "description": "Top bar search sits in the middle of the bar; on the search page it appears once the main search box scrolls out of view",
+      "workflows": {
+        "main": [
+          "User on / scrolls down until the big search box is no longer visible; a search box fades into the middle of the top bar",
+          "It works like the current top bar search: typing 2+ letters shows up to 5 suggestions with prices, clicking one opens the game, Enter shows all results for the text on /",
+          "User scrolls back up until the big search box is visible; the top bar box fades out"
+        ],
+        "alternate": [
+          "Other pages (/browse, /wishlist, /about, /games/<id>): the top bar search box is always shown, in the middle of the bar",
+          "Enter in the top bar box on /: the page search box and results update to that text and the page scrolls to the top",
+          "Phone width: the box is the 🔍 icon in the first row as today; tapping it opens the box; the bar stays two rows",
+          "Keyboard: arrows, Enter and Esc work as today; when the box hides while focused, focus is not lost to <body> unexpectedly (box stays until blurred)"
+        ],
+        "error": [
+          "Suggestions API fails: 'Suggestions unavailable. Press Enter to search.' as today",
+          "IntersectionObserver missing (old browser): on / the top bar box is always shown, nothing breaks"
+        ]
+      },
+      "steps": [
+        "Layout: three-part top bar (logo left, search centered, theme/links/currency right)",
+        "Shared state (useState) for 'page search box visible'; index.vue observes its search box and sets it; layout shows QuickSearch on / only when not visible, with a fade",
+        "cd frontend && npm run type-check && npm run lint pass",
+        "Walk through every workflow in the browser at 360px, 768px and desktop in all three presets"
+      ],
+      "passes": false
+    },
+    {
+      "id": "layout-03",
+      "phase": 14,
+      "category": "functional",
+      "description": "Search page landing view opens on a full-screen hero: logo and search box alone in the middle, a down arrow, the rest fades in on scroll",
+      "workflows": {
+        "main": [
+          "User opens / with no search or filter; the first screen shows only the full PixSales logo, the tagline and the search box, centered in the screen under the top bar, with a softly bouncing down arrow near the bottom",
+          "User scrolls down (or clicks the arrow, which scrolls smoothly to the content); the filters, landing sections and Biggest discounts fade and rise in as they come into view",
+          "Once the hero search box is out of view, the top bar search box appears in the middle of the bar (layout-02)",
+          "User types in the hero search box; the hero shrinks away and the results view (layout-01: search box on top, filter sidebar, results, discounts) takes its place, focus stays in the search box"
+        ],
+        "alternate": [
+          "Opening / with ?q= or a filter in the URL (shared link, Back from a game page): no hero, the results view shows right away",
+          "Clearing the search text and all filters: the hero comes back",
+          "Phone (360px): logo, tagline and search box fit the first screen without sideways scroll; the arrow sits above the bottom edge and is not hidden by browser bars (uses svh/dvh)",
+          "Keyboard: the arrow is a button with the name 'Scroll to deals', Enter scrolls and moves focus to the content",
+          "Very short screen (landscape phone): the hero is at least its content height, nothing overlaps"
+        ],
+        "error": [
+          "prefers-reduced-motion: no bounce, no fade; content just shows and the arrow click jumps instead of smooth-scrolling",
+          "IntersectionObserver missing: everything below the hero is shown at once, nothing stays invisible",
+          "Logo image fails: alt text 'PixSales' shows, the search box stays centered"
+        ]
+      },
+      "steps": [
+        "index.vue: landing hero (min-h of the screen minus the top bar, flex centered: BrandLogo + search box + arrow button); results view as in layout-01 when a search or filter is set",
+        "Down arrow: bounce animation (off under reduced motion), click scrolls to the content anchor",
+        "v-reveal on the filter column, landing sections and discount sidebar",
+        "cd frontend && npm run type-check && npm run lint pass",
+        "Walk through every workflow in the browser at 360px, 768px and desktop in all three presets, including reduced motion"
+      ],
+      "passes": false
     }
   ]
 }
