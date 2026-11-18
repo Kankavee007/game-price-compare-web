@@ -92,8 +92,9 @@ function reset() {
 </script>
 
 <template>
-  <!-- relative z-10: the store dropdown opens over the results below -->
-  <section aria-label="Filters" class="relative z-10 mb-8">
+  <!-- relative z-10: the dropdowns open over the results. lg+: it sits in the search page's
+       left sidebar, so the boxes stack in one column -->
+  <section aria-label="Filters" class="relative z-10 mb-8 lg:mb-0">
     <div class="flex items-center gap-3 md:hidden">
       <button
         type="button"
@@ -111,8 +112,8 @@ function reset() {
       class="panel mt-3 md:mt-0 space-y-4 p-4"
       :class="open ? 'block' : 'hidden md:block'"
     >
-      <!-- Four equal boxes: one per row on phones, two on tablets, four from lg up -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <!-- Four equal boxes: one per row on phones, two on tablets, one column in the lg sidebar -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
         <fieldset class="flex flex-col gap-1 min-w-0">
           <legend class="text-sm text-muted mb-1">Price ({{ currency }})</legend>
           <!-- Min and max share one box, the same size as the dropdowns -->

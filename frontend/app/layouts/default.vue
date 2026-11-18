@@ -16,6 +16,21 @@ const currency = computed<Currency>({
 function navTo(path: string) {
   return currency.value === 'USD' ? path : { path, query: { currency: currency.value } }
 }
+
+const isSearchPage = computed(() => route.path === '/')
+
+// Top bar search: always on other pages; on / only once the page's own box scrolled away.
+// While it has focus it stays, so focus is never dropped onto <body> mid-typing.
+const pageSearchVisible = usePageSearchVisible()
+const quickFocused = ref(false)
+const showQuickSearch = computed(
+  () => !isSearchPage.value || !pageSearchVisible.value || quickFocused.value,
+)
+
+function onQuickFocusOut(event: FocusEvent) {
+  const box = event.currentTarget as HTMLElement
+  if (!box.contains(event.relatedTarget as Node | null)) quickFocused.value = false
+}
 </script>
 
 <template>
@@ -23,12 +38,14 @@ function navTo(path: string) {
     <!-- Pinned while scrolling. z-30: above page content and the quick search list's own z-20;
          the screenshot full view is a modal <dialog> in the top layer, so it stays above this. -->
     <header class="sticky top-0 z-30 border-b border-line bg-bg/80 backdrop-blur">
+      <!-- Phone/tablet: wrapping flex (logo, search, theme in row 1; links + currency in row 2).
+           lg+: three columns, the search box in the middle of the bar. -->
       <nav
-        class="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-x-2 sm:gap-x-4 gap-y-2 px-3 py-3 sm:p-4"
+        class="max-w-screen-2xl mx-auto flex flex-wrap items-center justify-between gap-x-2 sm:gap-x-4 gap-y-2 px-3 py-3 sm:p-4 lg:grid lg:grid-cols-[1fr_auto_1fr]"
       >
         <NuxtLink
           :to="navTo('/')"
-          class="flex items-center gap-2 font-display text-lg sm:text-xl font-bold rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          class="flex items-center gap-2 font-display text-lg sm:text-xl font-bold rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-accent lg:justify-self-start"
         >
           <!-- Small area: the cropped mark only (public/brand/pixsales-mark.png); the name is text -->
           <img
@@ -40,12 +57,29 @@ function navTo(path: string) {
           />
           <span>Pix<span class="text-brand">Sales</span></span>
         </NuxtLink>
-        <!-- The search page has its own search box -->
-        <QuickSearch v-if="route.path !== '/'" class="ml-auto" />
+        <!-- The wrapper always exists (it pushes the theme button right on phones); the box
+             fades in on / once the page's own search box is out of view -->
+        <div
+          class="ml-auto lg:ml-0 lg:justify-self-center"
+          @focusin="quickFocused = true"
+          @focusout="onQuickFocusOut"
+        >
+          <Transition
+            enter-active-class="transition duration-150 ease-out"
+            enter-from-class="opacity-0 translate-y-1 scale-[0.98]"
+            leave-active-class="transition duration-100 ease-in"
+            leave-to-class="opacity-0 translate-y-1 scale-[0.98]"
+          >
+            <QuickSearch v-if="showQuickSearch" :icon-until-lg="isSearchPage" />
+          </Transition>
+        </div>
+        <!-- display: contents below lg, so theme (row 1) and links (row 2) stay separate flex
+             items and a phone keeps two rows; lg+: one right-aligned group -->
+        <div class="contents lg:flex lg:items-center lg:justify-self-end lg:gap-4">
         <!-- Theme presets sit in the first row (next to the logo) so the phone layout stays two rows -->
-        <ThemeSwitcher :class="{ 'ml-auto': route.path === '/' }" />
+        <ThemeSwitcher />
         <!-- Links and currency share one row, so a phone gets two rows in all -->
-        <div class="flex flex-wrap items-center justify-end gap-1.5 sm:gap-4">
+        <div class="flex flex-wrap lg:flex-nowrap items-center justify-end gap-1.5 sm:gap-4">
           <ul class="flex items-center sm:gap-1 text-muted">
             <li>
               <NuxtLink :to="navTo('/')" class="nav-link" active-class="nav-link-active"
@@ -76,10 +110,12 @@ function navTo(path: string) {
           </ul>
           <CurrencySelect v-model="currency" compact />
         </div>
+        </div>
       </nav>
     </header>
 
-    <main class="max-w-6xl mx-auto p-6">
+    <!-- The search page uses the full width; other pages keep a readable width -->
+    <main class="mx-auto p-6" :class="isSearchPage ? 'max-w-screen-2xl' : 'max-w-6xl'">
       <slot />
     </main>
 

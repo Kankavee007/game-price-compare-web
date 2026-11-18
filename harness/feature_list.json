@@ -1197,7 +1197,7 @@
         "cd frontend && npm run type-check && npm run lint pass",
         "Check at 360px, 768px, 1024px, 1280px and 1920px in all three presets"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "layout-02",
@@ -1227,7 +1227,7 @@
         "cd frontend && npm run type-check && npm run lint pass",
         "Walk through every workflow in the browser at 360px, 768px and desktop in all three presets"
       ],
-      "passes": false
+      "passes": true
     },
     {
       "id": "layout-03",
@@ -1261,7 +1261,7 @@
         "cd frontend && npm run type-check && npm run lint pass",
         "Walk through every workflow in the browser at 360px, 768px and desktop in all three presets, including reduced motion"
       ],
-      "passes": false
+      "passes": true
     }
   ]
 }

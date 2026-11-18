@@ -5,6 +5,10 @@ import { toCurrency, type Game } from '~/types'
 // Header search with suggestions. ARIA combobox pattern: focus stays in the input, arrow keys
 // move a highlighted option (aria-activedescendant), Enter opens it.
 
+// iconUntilLg: the box stays folded behind the icon button up to lg (not just sm), so showing
+// it on / never makes the top bar wrap to a taller second row while the user scrolls
+const props = defineProps<{ iconUntilLg?: boolean }>()
+
 const MAX_SUGGESTIONS = 5
 const MIN_LENGTH = 2
 const DEBOUNCE_MS = 300
@@ -157,14 +161,15 @@ function price(game: Game) {
     <button
       v-if="!expanded"
       type="button"
-      class="sm:hidden p-2 rounded-lg text-fg/80 hover:text-fg hover:bg-surface focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+      class="grid place-items-center w-9 h-9 rounded-xl text-fg/80 hover:text-fg hover:bg-surface-2/70 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
       aria-label="Search games"
+      :class="props.iconUntilLg ? 'lg:hidden' : 'sm:hidden'"
       @click="expand"
     >
       🔍
     </button>
 
-    <div :class="expanded ? 'block' : 'hidden sm:block'">
+    <div :class="expanded ? 'block' : props.iconUntilLg ? 'hidden lg:block' : 'hidden sm:block'">
       <label :for="ids.input" class="sr-only">Search games</label>
       <input
         :id="ids.input"
@@ -178,7 +183,7 @@ function price(game: Game) {
         :aria-expanded="open"
         :aria-controls="ids.list"
         :aria-activedescendant="active >= 0 ? optionId(active) : undefined"
-        class="field w-44 sm:w-56 p-2 text-sm"
+        class="field w-44 sm:w-56 lg:w-64 xl:w-96 p-2 text-sm"
         @input="onInput"
         @keydown="onKeydown"
       />
@@ -186,7 +191,7 @@ function price(game: Game) {
 
     <div
       v-show="open"
-      class="absolute right-0 z-20 mt-2 w-80 max-w-[calc(100vw-2rem)] rounded-2xl bg-surface/95 backdrop-blur border border-line shadow-2xl shadow-black/40 overflow-hidden"
+      class="absolute right-0 lg:right-auto lg:left-1/2 lg:-translate-x-1/2 z-20 mt-2 w-80 lg:w-96 max-w-[calc(100vw-2rem)] rounded-2xl bg-surface/95 backdrop-blur border border-line shadow-2xl shadow-black/40 overflow-hidden"
     >
       <p v-if="loading" class="p-3 text-sm text-muted" role="status">Searching…</p>
       <p v-else-if="failed" class="p-3 text-sm text-danger" role="status">
