@@ -1293,7 +1293,7 @@
         "cd frontend && npm run type-check && npm run lint pass",
         "Walk through every workflow in the browser (wheel, touchpad, keyboard, scrollbar, phone touch emulation), at 360px and desktop, with and without reduced motion"
       ],
-      "passes": false
+      "passes": true
     }
   ]
 }

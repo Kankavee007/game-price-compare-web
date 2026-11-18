@@ -228,11 +228,14 @@ onBeforeUnmount(() => {
   pageSearchVisible.value = true
 })
 
-// Hero arrow: scroll to the filters and deals, and move focus there for keyboard users
+// Landing hero <-> content snapping (wheel, swipe, keys); off in the results view
+const hero = ref<HTMLElement | null>(null)
 const content = ref<HTMLElement | null>(null)
+const snap = useHeroSnap({ enabled: showLanding, hero, content })
+
+// Hero arrow: the same glide as a scroll, and focus moves there for keyboard users
 function scrollToContent() {
-  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  content.value?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' })
+  snap.go('content')
   content.value?.focus({ preventScroll: true })
 }
 
@@ -248,6 +251,7 @@ useHead({ title: () => query.value.trim() })
          Once a search or filter is set it shrinks to just the search box across the full width.
          It is one input in both states, so typing never loses focus. -->
     <section
+      ref="hero"
       class="relative flex flex-col items-center justify-center transition-[min-height] duration-300 ease-out motion-reduce:transition-none"
       :class="showLanding ? 'hero-screen pb-20' : 'min-h-0'"
     >
