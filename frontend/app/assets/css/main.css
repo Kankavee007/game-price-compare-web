@@ -188,6 +188,34 @@
   transform: none;
 }
 
+/* Search page hero: fills the first screen under the sticky top bar (two rows on phones, one
+   from md) and the page padding. svh: phone browser bars never hide the arrow at the bottom.
+   min-height, so a very short screen just grows the hero to fit its content. */
+.hero-screen {
+  min-height: calc(100vh - 9rem);
+  min-height: calc(100svh - 9rem);
+}
+@media (min-width: 768px) {
+  .hero-screen {
+    min-height: calc(100vh - 6.5rem);
+    min-height: calc(100svh - 6.5rem);
+  }
+}
+
+/* Hero down arrow: a soft, slow bob (reduce motion stops it below) */
+.hint-bounce {
+  animation: hint-bounce 2s ease-in-out infinite;
+}
+@keyframes hint-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(6px);
+  }
+}
+
 /* OS "reduce motion": no slides, shimmer or stagger; content just appears */
 @media (prefers-reduced-motion: reduce) {
   *,

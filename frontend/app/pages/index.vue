@@ -202,6 +202,43 @@ onBeforeUnmount(() => {
   moreController?.abort()
 })
 
+// The top bar shows its own search box on / once this page's box is out of view
+const searchBox = ref<HTMLInputElement | null>(null)
+const pageSearchVisible = usePageSearchVisible()
+let searchObserver: IntersectionObserver | undefined
+
+onMounted(() => {
+  if (!('IntersectionObserver' in window) || !searchBox.value) {
+    pageSearchVisible.value = false // no observer: the top bar box is simply always shown
+    return
+  }
+  // The sticky top bar covers the top of the screen; a box under it counts as out of view
+  const barHeight = document.querySelector('header')?.offsetHeight ?? 0
+  searchObserver = new IntersectionObserver(
+    ([entry]) => {
+      pageSearchVisible.value = !!entry?.isIntersecting
+    },
+    { rootMargin: `-${barHeight}px 0px 0px 0px` },
+  )
+  searchObserver.observe(searchBox.value)
+})
+
+onBeforeUnmount(() => {
+  searchObserver?.disconnect()
+  pageSearchVisible.value = true
+})
+
+// Landing hero <-> content snapping (wheel, swipe, keys); off in the results view
+const hero = ref<HTMLElement | null>(null)
+const content = ref<HTMLElement | null>(null)
+const snap = useHeroSnap({ enabled: showLanding, hero, content })
+
+// Hero arrow: the same glide as a scroll, and focus moves there for keyboard users
+function scrollToContent() {
+  snap.go('content')
+  content.value?.focus({ preventScroll: true })
+}
+
 // app.vue adds " - PixSales"; an empty title shows "PixSales - Pixel Perfect Deals"
 useHead({ title: () => query.value.trim() })
 </script>
@@ -210,36 +247,83 @@ useHead({ title: () => query.value.trim() })
   <div>
     <h1 class="sr-only">PixSales: search game prices</h1>
 
-    <!-- Hero only on the landing view; once a search or filter is set it collapses so the
-         results stay near the top -->
-    <Transition
-      enter-active-class="transition-all duration-300 ease-out"
-      enter-from-class="opacity-0 max-h-0"
-      enter-to-class="opacity-100 max-h-60"
-      leave-active-class="transition-all duration-200 ease-in overflow-hidden"
-      leave-from-class="opacity-100 max-h-60"
-      leave-to-class="opacity-0 max-h-0"
+    <!-- Landing view: a hero that fills the first screen (logo, search box, down arrow).
+         Once a search or filter is set it shrinks to just the search box across the full width.
+         It is one input in both states, so typing never loses focus. -->
+    <section
+      ref="hero"
+      class="relative flex flex-col items-center justify-center transition-[min-height] duration-300 ease-out motion-reduce:transition-none"
+      :class="showLanding ? 'hero-screen pb-20' : 'min-h-0'"
     >
-      <BrandLogo v-if="showLanding" class="pt-2 pb-8" />
-    </Transition>
+      <Transition
+        enter-active-class="transition-all duration-300 ease-out"
+        enter-from-class="opacity-0 max-h-0"
+        enter-to-class="opacity-100 max-h-60"
+        leave-active-class="transition-all duration-200 ease-in overflow-hidden"
+        leave-from-class="opacity-100 max-h-60"
+        leave-to-class="opacity-0 max-h-0"
+      >
+        <BrandLogo v-if="showLanding" class="w-full pb-8" />
+      </Transition>
 
-    <!-- Desktop: results on the left, discount sidebar on the right. Smaller: sidebar below. -->
-    <div class="lg:grid lg:grid-cols-[minmax(0,1fr)_18rem] lg:gap-8">
-      <div>
-        <input
-          v-model="query"
-          type="search"
-          placeholder="Search game..."
-          aria-label="Search game"
-          class="field w-full px-4 py-3 text-lg rounded-2xl mb-4 shadow-lg shadow-black/20"
-        />
+      <input
+        ref="searchBox"
+        v-model="query"
+        type="search"
+        placeholder="Search game..."
+        aria-label="Search game"
+        class="field w-full px-4 py-3 text-lg rounded-2xl shadow-lg shadow-black/20 transition-[max-width] duration-300 motion-reduce:transition-none"
+        :class="showLanding ? 'max-w-2xl' : 'max-w-full'"
+      />
 
+      <Transition
+        enter-active-class="transition-opacity duration-300"
+        enter-from-class="opacity-0"
+        leave-active-class="transition-opacity duration-150"
+        leave-to-class="opacity-0"
+      >
+        <div v-if="showLanding" class="absolute inset-x-0 bottom-2 flex justify-center">
+          <button
+            type="button"
+            aria-label="Scroll to deals"
+            class="hint-bounce grid place-items-center w-11 h-11 rounded-full border border-line bg-surface/70 text-muted hover:text-fg hover:border-line-strong transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            @click="scrollToContent"
+          >
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 24 24"
+              class="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M6 9l6 6 6-6" />
+            </svg>
+          </button>
+        </div>
+      </Transition>
+    </section>
+
+    <!-- lg: filters | results (discounts below the results). xl: filters | results | discounts.
+         Below lg: one column, filters above the results. -->
+    <div
+      ref="content"
+      tabindex="-1"
+      class="mt-6 scroll-mt-32 sm:scroll-mt-24 focus:outline-none lg:grid lg:grid-cols-[15rem_minmax(0,1fr)] xl:grid-cols-[15rem_minmax(0,1fr)_16rem] lg:gap-8"
+    >
+      <!-- Pinned under the top bar, but only on screens tall enough to show the whole column.
+           relative z-10: its dropdowns open over the result cards. -->
+      <aside v-reveal class="relative z-10 lg:self-start lg:top-24 lg:[@media(min-height:640px)]:sticky">
         <SearchFilters v-model="filters" :currency="currency" :has-query="hasQuery" />
+      </aside>
 
+      <div>
         <!-- First load of a search: card-shaped placeholders. Later loads dim the old cards. -->
         <div
           v-if="loading && !games.length"
-          class="grid gap-6 grid-cols-2 sm:grid-cols-3 md:grid-cols-4"
+          class="grid gap-6 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 2xl:grid-cols-5"
           role="status"
           aria-label="Searching"
         >
@@ -283,7 +367,7 @@ useHead({ title: () => query.value.trim() })
 
         <div
           v-if="games.length"
-          class="grid gap-6 grid-cols-2 sm:grid-cols-3 md:grid-cols-4"
+          class="grid gap-6 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 2xl:grid-cols-5"
           :class="{ 'opacity-50': loading }"
         >
           <GameCard v-for="game in games" :key="game.gameID" :game="game" />
@@ -308,7 +392,10 @@ useHead({ title: () => query.value.trim() })
         </div>
       </div>
 
-      <aside class="mt-10 lg:mt-0 lg:sticky lg:top-24 lg:self-start">
+      <aside
+        v-reveal
+        class="mt-10 lg:col-start-2 xl:col-start-auto xl:mt-0 xl:sticky xl:top-24 xl:self-start"
+      >
         <DiscountSidebar :currency="currency" />
       </aside>
     </div>
