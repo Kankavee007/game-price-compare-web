@@ -1262,6 +1262,38 @@
         "Walk through every workflow in the browser at 360px, 768px and desktop in all three presets, including reduced motion"
       ],
       "passes": true
+    },
+    {
+      "id": "layout-04",
+      "phase": 14,
+      "category": "functional",
+      "description": "Search page snaps between the landing hero and the content: one scroll down goes to the content, one scroll up from the content top goes back to the hero, never resting in between",
+      "workflows": {
+        "main": [
+          "User is on the hero (/ with no search or filter) and scrolls down once (mouse wheel, touchpad or swipe); the page glides to the content (filters + sections), the same as clicking the down arrow",
+          "User is at the top of the content and scrolls up once; the page glides back to the hero top (logo + search box)",
+          "Inside the content (below its top) scrolling works normally in both directions; only crossing the hero/content boundary snaps"
+        ],
+        "alternate": [
+          "Keyboard on the hero: PageDown, Space or ArrowDown (focus not in the search box) snaps down; PageUp/ArrowUp/Home at the content top snaps up",
+          "Fast touchpad or flick: one snap per gesture, the extra momentum events are ignored until the glide ends, no double jump",
+          "Dragging the scrollbar and letting go between the hero and the content: the page settles to whichever is closer",
+          "Results view (a search or filter is set, no hero): no snapping, normal scroll",
+          "Window shorter than the hero (landscape phone): no snapping, normal scroll so nothing is unreachable",
+          "Ctrl + wheel (zoom) and scrolling inside an open dropdown are not affected"
+        ],
+        "error": [
+          "prefers-reduced-motion: still snaps, but jumps instantly instead of gliding",
+          "Typing in the hero search box: arrow/space keys type and move the cursor as usual, they never scroll"
+        ]
+      },
+      "steps": [
+        "useHeroSnap composable: listens to wheel, touch, key and scrollend on window while the hero is shown; decides 'snap down' / 'snap up' at the boundary, locks until the glide ends; the arrow button uses the same scroll function",
+        "Turned off when the hero hides (search/filter set), when the hero is taller than the window, and on unmount",
+        "cd frontend && npm run type-check && npm run lint pass",
+        "Walk through every workflow in the browser (wheel, touchpad, keyboard, scrollbar, phone touch emulation), at 360px and desktop, with and without reduced motion"
+      ],
+      "passes": false
     }
   ]
 }
