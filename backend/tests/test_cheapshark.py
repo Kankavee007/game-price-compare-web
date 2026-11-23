@@ -8,6 +8,7 @@ from game_api.services import cheapshark
 @pytest.fixture(autouse=True)
 def empty_cache(monkeypatch):
     monkeypatch.setattr(cheapshark, "_deals_cache", {})
+    monkeypatch.setattr(cheapshark, "_games_cache", {})
 
 
 class Calls(list):
@@ -89,6 +90,87 @@ def test_get_games_splits_ids_into_calls_of_25(monkeypatch):
 def test_get_games_empty_makes_no_call(monkeypatch):
     monkeypatch.setattr(cheapshark, "get_json", lambda *a, **k: pytest.fail("called"))
     assert cheapshark.get_games([]) == {}
+
+
+@pytest.fixture
+def games_http(monkeypatch):
+    """Fake /games?ids: records the ids of each call; ids in `calls.unknown` are left out."""
+    calls = Calls()
+    calls.unknown = set()
+
+    def fake(url, params=None, headers=None):
+        ids = params["ids"].split(",")
+        calls.append(ids)
+        return {i: {"info": {"title": f"Game {i}"}} for i in ids if i not in calls.unknown}
+
+    monkeypatch.setattr(cheapshark, "get_json", fake)
+    return calls
+
+
+def test_get_games_cache_hit_skips_the_api(games_http):
+    first = cheapshark.get_games(["1", "2"], cached=True)
+    second = cheapshark.get_games(["1", "2"], cached=True)
+
+    assert games_http == [["1", "2"]]
+    assert second == first == {"1": {"info": {"title": "Game 1"}}, "2": {"info": {"title": "Game 2"}}}
+
+
+def test_get_games_fetches_only_ids_not_cached(games_http):
+    cheapshark.get_games(["1", "2"], cached=True)
+    games = cheapshark.get_games(["1", "2", "3"], cached=True)
+
+    assert games_http == [["1", "2"], ["3"]]
+    assert set(games) == {"1", "2", "3"}
+
+
+def test_get_games_cache_expires(games_http, monkeypatch):
+    now = {"t": 1000.0}
+    monkeypatch.setattr(cheapshark.time, "time", lambda: now["t"])
+    cheapshark.get_games(["1"], cached=True)
+    now["t"] += config.GAMES_CACHE_SECONDS + 1
+    cheapshark.get_games(["1"], cached=True)
+
+    assert games_http == [["1"], ["1"]]
+
+
+def test_get_games_unknown_id_is_not_cached(games_http):
+    games_http.unknown = {"9"}
+    assert cheapshark.get_games(["1", "9"], cached=True) == {"1": {"info": {"title": "Game 1"}}}
+    cheapshark.get_games(["1", "9"], cached=True)
+
+    assert games_http == [["1", "9"], ["9"]]  # 1 from the cache, 9 asked again
+
+
+def test_get_games_cache_drops_oldest_above_max(games_http, monkeypatch):
+    monkeypatch.setattr(config, "GAMES_CACHE_MAX_ENTRIES", 2)
+    cheapshark.get_games(["1", "2", "3"], cached=True)
+    cheapshark.get_games(["1"], cached=True)  # was dropped, fetched again
+
+    assert games_http == [["1", "2", "3"], ["1"]]
+    assert len(cheapshark._games_cache) == 2
+
+
+def test_get_games_without_cached_always_calls_the_api(games_http):
+    """Search and the wishlist need live deals: the default never reads the cache."""
+    cheapshark.get_games(["1"])
+    cheapshark.get_games(["1"])
+
+    assert games_http == [["1"], ["1"]]
+
+
+def test_get_games_live_call_refreshes_the_cache(games_http):
+    cheapshark.get_games(["1"])  # live, still saved
+    cheapshark.get_games(["1"], cached=True)
+
+    assert games_http == [["1"]]
+
+
+def test_get_games_unexpected_response_is_not_cached(monkeypatch):
+    monkeypatch.setattr(cheapshark, "get_json", lambda *a, **k: ["not", "a", "dict"])
+    with pytest.raises(UpstreamError):
+        cheapshark.get_games(["1"])
+
+    assert cheapshark._games_cache == {}
 
 
 # --- stores ---------------------------------------------------------------------------------

@@ -43,9 +43,11 @@ def deals_api(monkeypatch):
     # Lowest price lookup: no data unless a test sets log.lowest
     log.lowest = {}
     log.lookups = []
+    log.cached = []
 
-    def fake_get_games(ids):
+    def fake_get_games(ids, cached=False):
         log.lookups.append(list(ids))
+        log.cached.append(cached)
         return {i: {"cheapestPriceEver": log.lowest[i]} for i in ids if i in log.lowest}
 
     monkeypatch.setattr(cheapshark, "get_games", fake_get_games)
@@ -222,8 +224,14 @@ def test_lowest_price_lookup_only_for_games_in_range(deals_api):
     assert deals_api.lookups == [["1"]]
 
 
+def test_lowest_price_lookup_uses_the_games_cache(deals_api):
+    # Deal lists only need the lowest price ever, so up to 15 min old is fine
+    find_deals("", "USD", {})
+    assert deals_api.cached == [True]
+
+
 def test_lowest_price_lookup_failure_still_returns_deals(deals_api, monkeypatch, caplog):
-    def down(ids):
+    def down(ids, cached=False):
         raise UpstreamError("down")
 
     monkeypatch.setattr(cheapshark, "get_games", down)
