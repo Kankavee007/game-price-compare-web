@@ -38,6 +38,8 @@ frontend/
 
 backend/
   app.py                  # entrypoint (Vercel loads `app` here)
+  scripts/
+    benchmark_cache.py    # count upstream API calls with caches on vs off (fake APIs): python scripts/benchmark_cache.py
   game_api/
     __init__.py           # create_app()
     config.py             # URLs, timeouts, cache durations, env vars
