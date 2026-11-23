@@ -9,6 +9,8 @@ _store_fetched_at = 0.0
 
 # {cache key: (fetched_at, rows, total_pages)}; dicts keep insertion order, so the first key is the oldest
 _deals_cache = {}
+# {gameID: (fetched_at, game)}; same oldest-first order as _deals_cache
+_games_cache = {}
 
 GAME_IDS_PER_CALL = 25  # CheapShark /games?ids accepts at most 25 ids
 
@@ -24,18 +26,47 @@ def search_games(title):
     return data
 
 
-def get_games(game_ids):
+def get_games(game_ids, cached=False):
     """{gameID: {info, cheapestPriceEver, deals}} for many games, one call per 25 ids.
 
     Ids CheapShark does not know are missing from the result.
+
+    cached=True reuses answers up to GAMES_CACHE_SECONDS old and fetches only the other ids.
+    Use it only where slightly old data is fine (lowest price ever on deal lists). Search and
+    the wishlist leave it False: they match live prices to these deals, which must be current.
+    Every fetched game is saved to the cache either way, so live calls keep it fresh.
     """
     games = {}
-    for start in range(0, len(game_ids), GAME_IDS_PER_CALL):
-        chunk = game_ids[start:start + GAME_IDS_PER_CALL]
+
+    now = time.time()
+    if cached:
+        for gid in game_ids:
+            in_cache = _games_cache.get(gid)
+            if not in_cache or now - in_cache[0] >= config.GAMES_CACHE_SECONDS:
+                _games_cache.pop(gid, None)
+                continue
+
+            games.update({gid: in_cache[1]})
+
+    left_over = [gid for gid in game_ids if gid not in games]
+
+    for start in range(0, len(left_over), GAME_IDS_PER_CALL):
+        chunk = left_over[start:start + GAME_IDS_PER_CALL]
         data = get_json(f"{config.CHEAPSHARK_BASE_URL}/games", {"ids": ",".join(chunk)})
         if not isinstance(data, dict):
             raise UpstreamError("CheapShark game lookup: unexpected response")
-        games.update({gid: game for gid, game in data.items() if isinstance(game, dict)})
+
+        for gid, game in data.items():
+            if not isinstance(game, dict):
+                continue
+
+            games.update({gid: game})
+            _games_cache.pop(gid, None)  # re-insert at the end so it counts as the newest
+            _games_cache[gid] = (now, game)
+
+    while len(_games_cache) > config.GAMES_CACHE_MAX_ENTRIES:
+        _games_cache.pop(next(iter(_games_cache)))
+
     return games
 
 

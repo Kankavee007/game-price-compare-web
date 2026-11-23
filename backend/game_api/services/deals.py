@@ -105,7 +105,7 @@ def _lowest_prices(game_ids):
     (with null lowest-price fields) and the error is logged.
     """
     try:
-        games = cheapshark.get_games(game_ids)
+        games = cheapshark.get_games(game_ids, cached=True)
     except (UpstreamError, KeyError, TypeError, ValueError):
         log.exception("lowest price lookup failed for %d games", len(game_ids))
         return {}
